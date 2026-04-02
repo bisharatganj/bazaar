@@ -14,13 +14,12 @@
   // ===== FIREBASE CONFIG =====
   // TODO: Replace with your own Firebase project config from https://console.firebase.google.com
   const firebaseConfig = {
-    apiKey: "AIzaSyAnpqpWA7pmu6FlmX2h9wufKzB9ETjinHs",
-    authDomain: "btg1-db7fd.firebaseapp.com",
-    projectId: "btg1-db7fd",
-    storageBucket: "btg1-db7fd.firebasestorage.app",
-    messagingSenderId: "347917344420",
-    appId: "1:347917344420:web:c6d616863d48c09d895031",
-    measurementId: "G-QVM3SN68X7"
+    apiKey: "YOUR_API_KEY",
+    authDomain: "YOUR_PROJECT.firebaseapp.com",
+    projectId: "YOUR_PROJECT_ID",
+    storageBucket: "YOUR_PROJECT.appspot.com",
+    messagingSenderId: "YOUR_SENDER_ID",
+    appId: "YOUR_APP_ID"
   };
 
   const app = initializeApp(firebaseConfig);
@@ -1133,31 +1132,25 @@ function compressImage(dataUrl, maxWidth, quality, cb) {
   };
   img.src = dataUrl;
 }
-function handleFiles(files) {
-  [...files].forEach(f => {
-    if (uploadedFiles.length >= 6) { showToast('Max 6 photos allowed'); return; }
-    if (!f.type.startsWith('image/')) return;
-    const reader = new FileReader();
-    reader.onload = e => {
-      compressImage(e.target.result, 900, 0.75, compressed => {
-        uploadedFiles.push({ url: compressed, name: f.name });
-        renderPreviews();
-        showStorageInfo();
-      });
-    };
-    reader.readAsDataURL(f);
-  });
-}
-function handleDrag(e) { e.preventDefault(); document.getElementById('uploadZone').classList.add('drag'); }
-function handleDragLeave() { document.getElementById('uploadZone').classList.remove('drag'); }
-function handleDrop(e) {
-  e.preventDefault();
-  document.getElementById('uploadZone').classList.remove('drag');
-  handleFiles(e.dataTransfer.files);
-}
-function renderPreviews() {
-  document.getElementById('previewGrid').innerHTML = uploadedFiles.map((f,i) => `
-    <div class="preview-item"><img src="${f.url}" alt=""><button onclick="removeFile(${i})">✕</button></div>
+async function handleFiles(files) {
+  uploadedFiles = [];
+  const previewGrid = document.getElementById('previewGrid');
+  previewGrid.innerHTML = "Uploading... ⏳";
+
+  for (let file of files) {
+    try {
+      const url = await uploadToCloudinary(file);
+      uploadedFiles.push(url);
+    } catch (e) {
+      console.error("Upload failed", e);
+    }
+  }
+
+  previewGrid.innerHTML = uploadedFiles.map((img, i) => `
+    <div class="preview-item">
+      <img src="${img}">
+      <button onclick="removeImage(${i})">✕</button>
+    </div>
   `).join('');
 }
 function removeFile(i) { uploadedFiles.splice(i, 1); renderPreviews(); showStorageInfo(); }
@@ -1184,16 +1177,31 @@ function submitAd() {
     showToast('⚠️ Please fill all required fields', true); return;
   }
   const id = Date.now();
-  const imgs = uploadedFiles.length > 0 ? uploadedFiles.map(f => f.url) : [DEMO_PLACEHOLDERS[category]||DEMO_PLACEHOLDERS.Other];
-  const newListing = {
-    id, title, category, condition, price, location,
-    desc: desc || 'No description provided.',
-    seller, phone: phone || 'Not provided',
-    imgs, favs: false, time: 'Just now',
-    postedAt: Date.now(), userUploaded: true,
-    ownerUid: currentUser.uid,
-    listingFee: Math.round(price * (charges.listingFeePercent/100))
-  };
+  const imgs = uploadedFiles.length > 0 ? imgs: uploadedFiles,: [DEMO_PLACEHOLDERS[category]||DEMO_PLACEHOLDERS.Other];
+  const id = Date.now();
+
+const imgs = uploadedFiles.length > 0
+  ? uploadedFiles
+  : [DEMO_PLACEHOLDERS[category] || DEMO_PLACEHOLDERS.Other];
+
+const newListing = {
+  id,
+  title,
+  category,
+  condition,
+  price,
+  location,
+  desc: desc || 'No description provided.',
+  seller,
+  phone: phone || 'Not provided',
+  imgs, // ✅ Cloudinary URLs yaha save honge
+  favs: false,
+  time: 'Just now',
+  postedAt: Date.now(),
+  userUploaded: true,
+  ownerUid: currentUser.uid,
+  listingFee: Math.round(price * (charges.listingFeePercent/100))
+};
   saveImages(id, imgs);
   listings.unshift(newListing);
   saveListings(listings);
@@ -1346,6 +1354,22 @@ function adminUpdateContact(id) {
 renderNav();
 renderListings();
 showStorageInfo();
+
+async function uploadToCloudinary(file) {
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("upload_preset", "my_upload"); // 👈 tumhara preset
+
+  const res = await fetch("https://api.cloudinary.com/v1_1/dada2emui/image/upload", {
+    method: "POST",
+    body: formData
+  });
+
+  const data = await res.json();
+  return data.secure_url;
+}
 </script>
+
+
 </body>
 </html>
