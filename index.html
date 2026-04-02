@@ -846,32 +846,20 @@ function submitAd() {
     showToast('⚠️ Please fill all required fields'); return;
   }
   const id = Date.now();
-  const imgs = uploadedFiles.length > 0 ? imgs: uploadedFiles,: [DEMO_PLACEHOLDERS[category]||DEMO_PLACEHOLDERS.Other];
-  const id = Date.now();
+  const imgs = uploadedFiles.length > 0
+    ? uploadedFiles.map(f => f.url)
+    : [DEMO_PLACEHOLDERS[category] || DEMO_PLACEHOLDERS.Other];
 
-const imgs = uploadedFiles.length > 0
-  ? uploadedFiles
-  : [DEMO_PLACEHOLDERS[category] || DEMO_PLACEHOLDERS.Other];
+  const { fee } = getListingFee(price);
 
-  
   const newListing = {
-  id,
-  title,
-  category,
-  condition,
-  price,
-  location,
-  desc: desc || 'No description provided.',
-  seller,
-  phone: phone || 'Not provided',
-  imgs, // ✅ Cloudinary URLs yaha save honge
-  favs: false,
-  time: 'Just now',
-  postedAt: Date.now(),
-  userUploaded: true,
-  ownerUid: currentUser.uid,
-  listingFee: Math.round(price * (charges.listingFeePercent/100))
-};
+    id, title, category, condition, price, location,
+    desc: desc || 'No description provided.',
+    seller, phone: phone || 'Not provided',
+    imgs, favs: false, time: 'Just now',
+    postedAt: Date.now(), userUploaded: true,
+    listingFee: fee
+  };
 
   // Save images separately
   saveImages(id, imgs);
@@ -903,19 +891,63 @@ function showToast(msg) {
 // ======= INIT =======
 renderListings();
 showStorageInfo();
-async function uploadToCloudinary(file) {
-  const formData = new FormData();
-  formData.append("file", file);
-  formData.append("upload_preset", "my_upload"); // 👈 tumhara preset
+</script>
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js"></script>
+<script>
+const firebaseConfig = {
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_PROJECT.firebaseapp.com",
+  projectId: "YOUR_PROJECT_ID",
+  appId: "YOUR_APP_ID"
+};
 
-  const res = await fetch("https://api.cloudinary.com/v1_1/dada2emui/image/upload", {
-    method: "POST",
-    body: formData
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+
+let confirmationResult;
+
+function sendOTP() {
+  const phoneInput = document.querySelector('#loginModal input[type="text"]').value;
+
+  if (!phoneInput.startsWith('+')) {
+    showToast('⚠️ Enter phone with country code (+91...)');
+    return;
+  }
+
+  window.recaptchaVerifier = new firebase.auth.RecaptchaVerifier('recaptcha-container', {
+    size: 'invisible'
   });
 
-  const data = await res.json();
-  return data.secure_url;
+  auth.signInWithPhoneNumber(phoneInput, window.recaptchaVerifier)
+    .then((result) => {
+      confirmationResult = result;
+      showToast('📩 OTP Sent');
+
+      const otp = prompt("Enter OTP");
+
+      if (otp) verifyOTP(otp);
+    })
+    .catch((error) => {
+      console.error(error);
+      showToast('❌ OTP failed');
+    });
+}
+
+function verifyOTP(otp) {
+  confirmationResult.confirm(otp)
+    .then((result) => {
+      showToast('✅ Logged in successfully');
+      hideModal('loginModal');
+      console.log("User:", result.user);
+    })
+    .catch(() => {
+      showToast('❌ Invalid OTP');
+    });
 }
 </script>
+<div id="recaptcha-container"></div>
+<button class="submit-btn" onclick="showToast('Logged in!'); hideModal('loginModal')">Login</button>
 </body>
 </html>
