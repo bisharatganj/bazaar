@@ -7,7 +7,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-  const SUPABASE_URL = 'https://kytailsminhycuhdfirf.supabase.co';
+  const SUPABASE_URL = 'https://kytailsminhycuhdfirf.supabase.co'; 
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt5dGFpbHNtaW5oeWN1aGRmaXJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwNjA0MzAsImV4cCI6MjA5MTYzNjQzMH0.tAE0T3BAcr3keR10pJ8f8bib8VcAwzbJvzJGGi7mujA';
   const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
   window._supabase = _supabase;
@@ -652,24 +652,30 @@ function clearOtpInputs() {
 
 async function sendEmailOTP() {
   const email = document.getElementById('authEmail').value.trim().toLowerCase();
-  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-    showToast('⚠️ Sahi email address daalo', true); return;
+  if (!email) {
+    showToast('⚠️ Please enter email', true);
+    return;
   }
-  const btn = document.getElementById('sendOtpBtn');
-  btn.disabled = true;
-  btn.innerHTML = '<span class="spinner"></span> Bheja ja raha hai…';
 
   try {
     const { error } = await window._supabase.auth.signInWithOtp({
       email: email,
       options: {
-        // Change this to false if you only want existing users to log in, 
-        // or true to allow new users to register via OTP
+        // Is line ko check karein, ye naye account banane mein madad karega
         shouldCreateUser: true, 
       }
     });
 
     if (error) throw error;
+
+    // UI changes for OTP step
+    document.getElementById('authStep1').style.display='none';
+    document.getElementById('authStep2').style.display='';
+    showToast('📧 OTP bhej diya gaya hai!');
+  } catch(e) {
+    showToast('❌ Error: ' + e.message, true);
+  }
+}
 
     document.getElementById('otpSentTo').textContent = email;
     document.getElementById('authStep1').style.display='none';
