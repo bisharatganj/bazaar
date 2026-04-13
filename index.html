@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en"> 
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -661,12 +661,16 @@ async function sendEmailOTP() {
 
   try {
     const { error } = await window._supabase.auth.signInWithOtp({
-      email,
+      email: email,
       options: {
-        shouldCreateUser: true, // naye user ke liye account bhi ban jayega
+        // Change this to false if you only want existing users to log in, 
+        // or true to allow new users to register via OTP
+        shouldCreateUser: true, 
       }
     });
+
     if (error) throw error;
+
     document.getElementById('otpSentTo').textContent = email;
     document.getElementById('authStep1').style.display='none';
     document.getElementById('authStep2').style.display='';
@@ -675,9 +679,11 @@ async function sendEmailOTP() {
     showToast('📧 OTP bhej diya! Email check karo.');
   } catch(e) {
     showToast('❌ ' + (e.message || 'OTP bhejne mein error'), true);
+    console.error(e);
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '📨 OTP Bhejo';
   }
-  btn.disabled = false;
-  btn.innerHTML = '📨 OTP Bhejo';
 }
 
 async function resendEmailOTP() {
