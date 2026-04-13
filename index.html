@@ -430,7 +430,7 @@
         <button class="close-btn" onclick="goBackToStep1()">←</button>
       </div>
       <div class="otp-sent-info">
-        ✉️ 6-digit OTP bheja gaya: <strong id="otpSentTo"></strong><br>
+        ✉️ 8-digit OTP bheja gaya: <strong id="otpSentTo"></strong><br>
         <span style="color:var(--muted);font-size:.8rem;">Spam/Junk folder bhi check karo</span>
       </div>
      <div class="otp-inputs" id="otpInputs">
@@ -936,7 +936,7 @@ async function resendEmailOTP() {
 async function verifyEmailOTP() {
   const inputs = document.querySelectorAll('.otp-input');
   const token = [...inputs].map(i => i.value).join('');
-  if (token.length !== 6) { showToast('⚠️ 6 digit OTP daalo', true); return; }
+  if (token.length !== 8) { showToast('⚠️ 6 digit OTP daalo', true); return; }
 
   const email = document.getElementById('otpSentTo').textContent.trim();
   const name = document.getElementById('authNameStep2').value.trim();
