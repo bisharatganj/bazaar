@@ -907,7 +907,7 @@ async function sendEmailOTP() {
   try {
     const { error } = await _supabase.auth.signInWithOtp({
       email,
-      options: { emailRedirectTo: window.location.origin, shouldCreateUser: true }
+      options: { emailRedirectTo: window.location.origin + "/bazaar", shouldCreateUser: true }
     });
     if (error) throw error;
 
@@ -1045,6 +1045,11 @@ function removeImg(i) {
 // ============================================================
 // SUBMIT AD
 // ============================================================
+if (!currentUser) {
+  showToast("⚠️ Pehle login karo", true);
+  return;
+}
+
 async function submitAd() {
   if (!currentUser) { showToast('🔒 Login karke ad post karo', true); openAuthModal(); return; }
   const title = document.getElementById('adTitle').value.trim();
