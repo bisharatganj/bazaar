@@ -569,6 +569,11 @@ async function init() {
   users = await sbLoadUsers() || [];
   renderListings();
 }
+  window._supabase.auth.onAuthStateChange((event, session) => {
+  if (session?.user) {
+    window.onAuthChanged(session.user);
+  }
+});
 init();
 
 // ======= NAV =======
