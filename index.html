@@ -5,26 +5,17 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>BazaarNow — Buy & Sell Anything</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
-
-<!-- Supabase SDK -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-  // ===== SUPABASE CONFIG =====
-  // Apna Supabase Project URL aur Anon Key yahan daalo
-  // Dashboard → Settings → API se milega
   const SUPABASE_URL = 'https://kytailsminhycuhdfirf.supabase.co';
-  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt5dGFpbHNtaW5oeWN1aGRmaXJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwNjA0MzAsImV4cCI6MjA5MTYzNjQzMH0.tAE0T3BAcr3keR10pJ8f8bib8VcAwzbJvzJGGi7mujA'; // 👈 Yeh replace karo
-
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt5dGFpbHNtaW5oeWN1aGRmaXJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwNjA0MzAsImV4cCI6MjA5MTYzNjQzMH0.tAE0T3BAcr3keR10pJ8f8bib8VcAwzbJvzJGGi7mujA';
   const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
   window._supabase = _supabase;
-
-  // Auth state listener
   _supabase.auth.onAuthStateChange((event, session) => {
     window._supabaseSession = session;
     if (typeof window.onAuthChanged === 'function') window.onAuthChanged(session?.user || null);
   });
 </script>
-
 <style>
   :root {
     --bg: #0f0e0c;
@@ -65,8 +56,6 @@
   .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
   .btn-primary { background: var(--accent); color: #000; font-weight: 700; }
   .btn-primary:hover { background: #f7b84a; transform: translateY(-1px); }
-  .btn-danger { background: var(--accent2); color: #fff; font-weight: 700; }
-  .btn-danger:hover { filter: brightness(1.1); }
 
   /* USER AVATAR */
   .user-avatar-btn {
@@ -79,7 +68,7 @@
   .user-dropdown {
     position: absolute; top: calc(100% + .5rem); right: 0;
     background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
-    min-width: 200px; overflow: hidden; z-index: 200;
+    min-width: 220px; overflow: hidden; z-index: 200;
     box-shadow: 0 8px 32px rgba(0,0,0,0.5);
     display: none;
   }
@@ -93,7 +82,7 @@
   .user-dropdown-item:hover { background: var(--surface2); }
   .user-dropdown-info { padding: .85rem 1rem; border-bottom: 1px solid var(--border); }
   .user-dropdown-name { font-weight: 600; font-size: .95rem; }
-  .user-dropdown-phone { font-size: .78rem; color: var(--muted); }
+  .user-dropdown-email { font-size: .78rem; color: var(--muted); }
 
   /* HERO */
   .hero { padding: 3.5rem 2rem 2.5rem; text-align: center; position: relative; overflow: hidden; }
@@ -108,7 +97,6 @@
   /* FAB */
   .sell-fab { position: fixed; bottom: 2rem; right: 2rem; z-index: 200; background: var(--accent2); color: #fff; border: none; border-radius: 50px; padding: .85rem 1.6rem; font-family: 'Syne', sans-serif; font-weight: 700; font-size: 1rem; cursor: pointer; box-shadow: 0 8px 32px rgba(232,71,29,0.4); display: flex; align-items: center; gap: .5rem; transition: all .25s; }
   .sell-fab:hover { transform: translateY(-3px); box-shadow: 0 12px 40px rgba(232,71,29,0.5); }
-  .sell-fab svg { width: 20px; height: 20px; }
 
   /* GRID */
   main { max-width: 1280px; margin: 0 auto; padding: 0 2rem 4rem; }
@@ -152,17 +140,10 @@
   .form-textarea { resize: vertical; min-height: 90px; }
   .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; }
 
-  /* PHONE INPUT */
-  .phone-input-row { display: flex; gap: .5rem; }
-  .phone-country-code { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; color: var(--text); padding: .65rem .75rem; font-size: .95rem; width: 80px; text-align: center; flex-shrink: 0; }
+  /* OTP INPUTS */
   .otp-inputs { display: flex; gap: .5rem; justify-content: center; margin: 1rem 0; }
   .otp-input { width: 48px; height: 56px; background: var(--surface2); border: 2px solid var(--border); border-radius: 10px; color: var(--text); font-size: 1.4rem; font-family: 'Syne', sans-serif; font-weight: 700; text-align: center; outline: none; transition: border-color .2s; }
   .otp-input:focus { border-color: var(--accent); }
-
-  /* AUTH TABS */
-  .auth-tabs { display: flex; gap: 0; margin-bottom: 1.5rem; background: var(--surface2); border-radius: 10px; padding: 4px; }
-  .auth-tab { flex: 1; padding: .55rem; text-align: center; cursor: pointer; border-radius: 8px; font-size: .9rem; font-weight: 500; transition: all .2s; color: var(--muted); border: none; background: none; }
-  .auth-tab.active { background: var(--surface); color: var(--text); font-weight: 700; box-shadow: 0 2px 8px rgba(0,0,0,0.3); }
 
   /* UPLOAD */
   .upload-zone { border: 2px dashed var(--border); border-radius: 12px; padding: 2rem; text-align: center; cursor: pointer; transition: all .2s; position: relative; }
@@ -179,6 +160,12 @@
   .submit-btn:hover { background: #f7b84a; transform: translateY(-1px); }
   .submit-btn:disabled { opacity: .5; cursor: not-allowed; transform: none; }
 
+  /* AUTH STEPS */
+  .auth-step { }
+  .email-hint { font-size: .82rem; color: var(--muted); margin-top: .4rem; line-height: 1.5; }
+  .otp-sent-info { background: rgba(46,207,122,0.1); border: 1px solid rgba(46,207,122,0.3); border-radius: 10px; padding: .85rem 1rem; margin-bottom: 1.25rem; font-size: .9rem; }
+  .otp-sent-info strong { color: var(--green); }
+
   /* DETAIL MODAL */
   .detail-imgs { display: flex; flex-direction: column; gap: .5rem; margin-bottom: 1.25rem; }
   .detail-main-img { width: 100%; border-radius: 10px; aspect-ratio: 16/9; object-fit: cover; background: var(--surface2); }
@@ -194,19 +181,21 @@
   .seller-avatar { width: 44px; height: 44px; border-radius: 50%; background: linear-gradient(135deg, var(--accent), var(--accent2)); display: flex; align-items: center; justify-content: center; font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1rem; color: #000; flex-shrink: 0; }
   .seller-name { font-weight: 600; font-size: .95rem; }
   .seller-sub { color: var(--muted); font-size: .8rem; }
-  .contact-btn { width: 100%; padding: .85rem; background: var(--green); color: #000; border: none; border-radius: 10px; font-family: 'Syne', sans-serif; font-weight: 700; font-size: 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: .5rem; transition: all .25s; }
+  .contact-btn { width: 100%; padding: .85rem; background: var(--green); color: #000; border: none; border-radius: 10px; font-family: 'Syne', sans-serif; font-weight: 700; font-size: 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: .5rem; transition: all .25s; margin-bottom: .5rem; }
   .contact-btn:hover { filter: brightness(1.1); transform: translateY(-1px); }
-  .login-gate { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 1rem; text-align: center; color: var(--muted); font-size: .9rem; margin-bottom: .5rem; }
-  .login-gate strong { color: var(--accent); cursor: pointer; }
+  .contact-reveal { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 1rem; display: flex; align-items: center; gap: .75rem; margin-bottom: .5rem; }
+  .contact-reveal .contact-phone { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 1.1rem; color: var(--green); }
+  .login-gate { background: linear-gradient(135deg, rgba(245,166,35,0.08), rgba(232,71,29,0.06)); border: 1px solid rgba(245,166,35,0.2); border-radius: 10px; padding: 1rem; text-align: center; margin-bottom: .75rem; }
+  .login-gate p { color: var(--muted); font-size: .88rem; margin-bottom: .75rem; }
+  .login-gate strong { color: var(--accent); }
 
   /* TOAST */
-  .toast { position: fixed; bottom: 5rem; left: 50%; transform: translateX(-50%) translateY(20px); background: var(--green); color: #000; border-radius: 50px; padding: .7rem 1.5rem; font-weight: 700; font-size: .9rem; z-index: 500; opacity: 0; transition: all .3s; pointer-events: none; }
+  .toast { position: fixed; bottom: 5rem; left: 50%; transform: translateX(-50%) translateY(20px); background: var(--green); color: #000; border-radius: 50px; padding: .7rem 1.5rem; font-weight: 700; font-size: .9rem; z-index: 500; opacity: 0; transition: all .3s; pointer-events: none; white-space: nowrap; }
   .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
   .toast.error { background: var(--accent2); color: #fff; }
 
   /* EMPTY */
-  .empty { text-align: center; padding: 4rem 1rem; color: var(--muted); }
-  .empty svg { width: 64px; opacity: .3; margin-bottom: 1rem; }
+  .empty { text-align: center; padding: 4rem 1rem; color: var(--muted); grid-column: 1/-1; }
 
   /* FILTERS */
   .filters-row { display: flex; gap: .5rem; flex-wrap: wrap; margin-bottom: 1.5rem; align-items: center; }
@@ -214,10 +203,12 @@
   .filter-chip:hover, .filter-chip.active { background: var(--accent); color: #000; border-color: var(--accent); font-weight: 600; }
   .sort-select { margin-left: auto; background: var(--surface2); border: 1px solid var(--border); color: var(--text); border-radius: 8px; padding: .35rem .7rem; font-family: 'DM Sans', sans-serif; font-size: .85rem; cursor: pointer; outline: none; }
 
-  /* RECAPTCHA container */
-  #recaptcha-container { margin: .75rem 0; }
+  /* SPINNER */
+  .spinner { display: inline-block; width: 18px; height: 18px; border: 2px solid rgba(0,0,0,0.3); border-top-color: #000; border-radius: 50%; animation: spin .7s linear infinite; vertical-align: middle; margin-right: .4rem; }
+  .spinner-light { border-color: rgba(255,255,255,0.3); border-top-color: #fff; }
+  @keyframes spin { to { transform: rotate(360deg); } }
 
-  /* ADMIN PANEL */
+  /* ADMIN */
   .admin-page { max-width: 1100px; margin: 0 auto; padding: 2rem; }
   .admin-header { display: flex; align-items: center; gap: 1rem; margin-bottom: 2rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border); }
   .admin-header h1 { font-family: 'Syne', sans-serif; font-size: 1.8rem; font-weight: 800; }
@@ -227,8 +218,8 @@
   .admin-tab.active { background: var(--accent); color: #000; border-color: var(--accent); font-weight: 700; }
   .admin-section { display: none; }
   .admin-section.active { display: block; }
-  .admin-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.25rem; margin-bottom: .75rem; display: flex; align-items: center; gap: 1rem; }
-  .admin-card-info { flex: 1; }
+  .admin-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.25rem; margin-bottom: .75rem; display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
+  .admin-card-info { flex: 1; min-width: 200px; }
   .admin-card-title { font-weight: 600; font-size: .95rem; margin-bottom: .2rem; }
   .admin-card-sub { font-size: .8rem; color: var(--muted); }
   .admin-card-actions { display: flex; gap: .5rem; flex-shrink: 0; }
@@ -236,34 +227,20 @@
   .admin-stat { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.25rem; }
   .admin-stat-label { font-size: .8rem; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; margin-bottom: .4rem; }
   .admin-stat-value { font-family: 'Syne', sans-serif; font-size: 2rem; font-weight: 800; color: var(--accent); }
-  .admin-fee-row { display: flex; align-items: center; gap: 1rem; margin-bottom: .75rem; flex-wrap: wrap; }
-  .admin-fee-label { font-weight: 500; min-width: 160px; }
-  .admin-fee-input { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; color: var(--text); padding: .5rem .75rem; font-family: 'DM Sans', sans-serif; font-size: .95rem; width: 100px; outline: none; transition: border-color .2s; }
-  .admin-fee-input:focus { border-color: var(--accent); }
   .small-btn { padding: .35rem .75rem; font-size: .82rem; font-weight: 600; border: none; border-radius: 6px; cursor: pointer; transition: all .2s; }
   .small-btn-danger { background: rgba(232,71,29,0.15); color: var(--accent2); border: 1px solid rgba(232,71,29,0.3); }
   .small-btn-danger:hover { background: var(--accent2); color: #fff; }
   .small-btn-primary { background: var(--accent); color: #000; }
   .small-btn-primary:hover { filter: brightness(1.1); }
 
-  /* SPINNER */
-  .spinner { display: inline-block; width: 20px; height: 20px; border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: spin .7s linear infinite; vertical-align: middle; margin-right: .4rem; }
-  @keyframes spin { to { transform: rotate(360deg); } }
-
-  /* DIVIDER */
-  .divider { display: flex; align-items: center; gap: 1rem; margin: 1rem 0; color: var(--muted); font-size: .82rem; }
-  .divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
-
   @media (max-width: 600px) {
-    nav { padding: 0 1rem; }
+    nav { padding: 0 1rem; gap: .75rem; }
     .logo { font-size: 1.2rem; }
     main { padding: 0 1rem 5rem; }
     .hero { padding: 2rem 1rem 1.5rem; }
     .modal { padding: 1.25rem; }
     .form-row { grid-template-columns: 1fr; }
     .admin-page { padding: 1rem; }
-    .admin-stat-grid { grid-template-columns: 1fr 1fr; }
-    .admin-card { flex-wrap: wrap; }
   }
 </style>
 </head>
@@ -273,40 +250,37 @@
 <nav id="mainNav">
   <div class="logo">Bazaar<span>Now</span></div>
   <div class="search-bar">
-    <input type="text" id="searchInput" placeholder="Search mobiles, cycles, clothes…" oninput="filterListings()">
-    <button onclick="filterListings()">Search</button>
+    <input type="text" id="searchInput" placeholder="Search mobiles, cycles, clothes…" oninput="renderListings()">
+    <button onclick="renderListings()">Search</button>
   </div>
-  <div class="nav-right" id="navRight">
-    <!-- Rendered by JS based on auth state -->
-  </div>
+  <div class="nav-right" id="navRight"></div>
 </nav>
 
-<!-- HERO (main marketplace) -->
+<!-- MAIN VIEW -->
 <div id="mainView">
   <section class="hero">
     <h1>Buy & Sell <em>Anything</em><br>Near You</h1>
     <p>List your old mobile, cycle, clothes & more — for free</p>
     <div class="hero-cats" id="heroCats">
-      <div class="cat-pill active" onclick="filterCat('All', this)">All</div>
-      <div class="cat-pill" onclick="filterCat('Mobiles', this)">📱 Mobiles</div>
-      <div class="cat-pill" onclick="filterCat('Cycles', this)">🚲 Cycles</div>
-      <div class="cat-pill" onclick="filterCat('Clothes', this)">👕 Clothes</div>
-      <div class="cat-pill" onclick="filterCat('Electronics', this)">💻 Electronics</div>
-      <div class="cat-pill" onclick="filterCat('Furniture', this)">🛋️ Furniture</div>
-      <div class="cat-pill" onclick="filterCat('Books', this)">📚 Books</div>
-      <div class="cat-pill" onclick="filterCat('Vehicles', this)">🚗 Vehicles</div>
-      <div class="cat-pill" onclick="filterCat('Other', this)">📦 Other</div>
+      <div class="cat-pill active" onclick="filterCat('All',this)">All</div>
+      <div class="cat-pill" onclick="filterCat('Mobiles',this)">📱 Mobiles</div>
+      <div class="cat-pill" onclick="filterCat('Cycles',this)">🚲 Cycles</div>
+      <div class="cat-pill" onclick="filterCat('Clothes',this)">👕 Clothes</div>
+      <div class="cat-pill" onclick="filterCat('Electronics',this)">💻 Electronics</div>
+      <div class="cat-pill" onclick="filterCat('Furniture',this)">🛋️ Furniture</div>
+      <div class="cat-pill" onclick="filterCat('Books',this)">📚 Books</div>
+      <div class="cat-pill" onclick="filterCat('Vehicles',this)">🚗 Vehicles</div>
+      <div class="cat-pill" onclick="filterCat('Other',this)">📦 Other</div>
     </div>
   </section>
-
   <main>
-    <div class="filters-row" id="filtersRow">
-      <div class="filter-chip active" onclick="filterCondition('All', this)">All Conditions</div>
-      <div class="filter-chip" onclick="filterCondition('New', this)">🌟 New</div>
-      <div class="filter-chip" onclick="filterCondition('Like New', this)">✨ Like New</div>
-      <div class="filter-chip" onclick="filterCondition('Good', this)">👍 Good</div>
-      <div class="filter-chip" onclick="filterCondition('Fair', this)">🔧 Fair</div>
-      <select class="sort-select" onchange="sortListings(this.value)">
+    <div class="filters-row">
+      <div class="filter-chip active" onclick="filterCondition('All',this)">All Conditions</div>
+      <div class="filter-chip" onclick="filterCondition('New',this)">🌟 New</div>
+      <div class="filter-chip" onclick="filterCondition('Like New',this)">✨ Like New</div>
+      <div class="filter-chip" onclick="filterCondition('Good',this)">👍 Good</div>
+      <div class="filter-chip" onclick="filterCondition('Fair',this)">🔧 Fair</div>
+      <select class="sort-select" onchange="currentSort=this.value;renderListings()">
         <option value="newest">Newest First</option>
         <option value="price_asc">Price: Low to High</option>
         <option value="price_desc">Price: High to Low</option>
@@ -314,7 +288,7 @@
     </div>
     <div class="section-header">
       <div class="section-title" id="gridTitle">All Listings</div>
-      <button class="see-all" id="listingCount"></button>
+      <span class="see-all" id="listingCount"></span>
     </div>
     <div class="grid" id="listingsGrid"></div>
   </main>
@@ -329,47 +303,93 @@
         <div style="color:var(--muted);font-size:.9rem;margin-top:.2rem;">BazaarNow Management Console</div>
       </div>
       <span class="admin-badge">ADMIN</span>
-      <button class="btn btn-ghost" style="margin-left:auto;" onclick="showMainView()">← Back to Marketplace</button>
+      <button class="btn btn-ghost" style="margin-left:auto;" onclick="showMainView()">← Back</button>
     </div>
-
     <div class="admin-stat-grid" id="adminStats"></div>
-
     <div class="admin-tabs">
-      <button class="admin-tab active" onclick="switchAdminTab('listings', this)">📦 Listings</button>
-      <button class="admin-tab" onclick="switchAdminTab('users', this)">👥 Users</button>
-      <button class="admin-tab" onclick="switchAdminTab('charges', this)">💰 Charges</button>
-      <button class="admin-tab" onclick="switchAdminTab('contacts', this)">📞 Seller Contacts</button>
+      <button class="admin-tab active" onclick="switchAdminTab('listings',this)">📦 Listings</button>
+      <button class="admin-tab" onclick="switchAdminTab('users',this)">👥 Users</button>
+      <button class="admin-tab" onclick="switchAdminTab('contacts',this)">📞 Contacts</button>
     </div>
-
     <div class="admin-section active" id="adminListings"></div>
     <div class="admin-section" id="adminUsers"></div>
-    <div class="admin-section" id="adminCharges"></div>
     <div class="admin-section" id="adminContacts"></div>
   </div>
 </div>
 
 <!-- FAB -->
 <button class="sell-fab" id="sellFab" onclick="handleSellClick()">
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
   Sell Now
 </button>
+
+<!-- ===== AUTH MODAL ===== -->
+<div class="overlay" id="authModal" onclick="handleOverlayClick(event,'authModal')">
+  <div class="modal" style="max-width:420px;">
+
+    <!-- STEP 1: Enter Email -->
+    <div id="authStep1">
+      <div class="modal-header">
+        <div class="modal-title">Welcome 👋</div>
+        <button class="close-btn" onclick="hideModal('authModal')">✕</button>
+      </div>
+      <div class="form-group">
+        <label class="form-label">📧 Email Address</label>
+        <input class="form-input" id="authEmail" type="email" placeholder="aapki@email.com" autocomplete="email">
+        <div class="email-hint">Aapki email par ek OTP bheja jayega. Sign in ya account create dono ke liye same process hai.</div>
+      </div>
+      <button class="submit-btn" id="sendOtpBtn" onclick="sendEmailOTP()">
+        📨 OTP Bhejo
+      </button>
+    </div>
+
+    <!-- STEP 2: Enter OTP -->
+    <div id="authStep2" style="display:none;">
+      <div class="modal-header">
+        <div class="modal-title">OTP Verify Karo 🔐</div>
+        <button class="close-btn" onclick="goBackToStep1()">←</button>
+      </div>
+      <div class="otp-sent-info">
+        ✉️ 6-digit OTP bheja gaya: <strong id="otpSentTo"></strong><br>
+        <span style="color:var(--muted);font-size:.8rem;">Spam/Junk folder bhi check karo</span>
+      </div>
+      <div class="otp-inputs" id="otpInputs">
+        <input class="otp-input" maxlength="1" type="text" inputmode="numeric" oninput="otpNav(this,0)" onkeydown="otpBack(event,0)">
+        <input class="otp-input" maxlength="1" type="text" inputmode="numeric" oninput="otpNav(this,1)" onkeydown="otpBack(event,1)">
+        <input class="otp-input" maxlength="1" type="text" inputmode="numeric" oninput="otpNav(this,2)" onkeydown="otpBack(event,2)">
+        <input class="otp-input" maxlength="1" type="text" inputmode="numeric" oninput="otpNav(this,3)" onkeydown="otpBack(event,3)">
+        <input class="otp-input" maxlength="1" type="text" inputmode="numeric" oninput="otpNav(this,4)" onkeydown="otpBack(event,4)">
+        <input class="otp-input" maxlength="1" type="text" inputmode="numeric" oninput="otpNav(this,5)" onkeydown="otpBack(event,5)">
+      </div>
+      <div class="form-group" id="nameStep2Group">
+        <label class="form-label">Aapka Naam (pehli baar login ke liye)</label>
+        <input class="form-input" id="authNameStep2" type="text" placeholder="Full Name">
+      </div>
+      <button class="submit-btn" id="verifyOtpBtn" onclick="verifyEmailOTP()">✅ Verify & Login</button>
+      <p style="text-align:center;margin-top:.75rem;font-size:.82rem;color:var(--muted);">
+        OTP nahi aaya? <span style="color:var(--accent);cursor:pointer;" onclick="resendEmailOTP()">Dobara bhejo</span>
+      </p>
+    </div>
+
+  </div>
+</div>
 
 <!-- SELL MODAL -->
 <div class="overlay" id="sellModal" onclick="handleOverlayClick(event,'sellModal')">
   <div class="modal">
     <div class="modal-header">
-      <div class="modal-title">📸 Post Your Ad</div>
+      <div class="modal-title">📸 Ad Post Karo</div>
       <button class="close-btn" onclick="hideModal('sellModal')">✕</button>
     </div>
     <div class="form-group">
-      <label class="form-label">Photos (up to 6) <span style="font-weight:400;color:var(--green);font-size:.75rem;text-transform:none;">✅ Saved to your device</span></label>
-      <div class="upload-zone" id="uploadZone" ondragover="handleDrag(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event)">
+      <label class="form-label">Photos (max 6)</label>
+      <div class="upload-zone" id="uploadZone">
         <input type="file" multiple accept="image/*" id="fileInput" onchange="handleFiles(this.files)">
         <div class="upload-icon">🖼️</div>
-        <div class="upload-text"><strong>Click to upload</strong> or drag & drop<br>JPG, PNG, WEBP — auto-compressed &amp; saved to device</div>
+        <div class="upload-text"><strong>Click karke upload karo</strong> ya drag & drop<br>JPG, PNG, WEBP</div>
       </div>
       <div class="preview-grid" id="previewGrid"></div>
-      <div id="storageInfo" style="font-size:.75rem;color:var(--muted);margin-top:.4rem;"></div>
+      <div id="uploadStatus" style="font-size:.75rem;color:var(--muted);margin-top:.4rem;"></div>
     </div>
     <div class="form-group">
       <label class="form-label">Title</label>
@@ -405,104 +425,17 @@
     </div>
     <div class="form-group">
       <label class="form-label">Description</label>
-      <textarea class="form-textarea" id="adDesc" placeholder="Describe what you're selling…"></textarea>
+      <textarea class="form-textarea" id="adDesc" placeholder="Apni cheez ke baare mein batao…"></textarea>
     </div>
     <div class="form-group">
-      <label class="form-label">Your Name</label>
+      <label class="form-label">Aapka Naam</label>
       <input class="form-input" id="adSeller" type="text" placeholder="Full name">
     </div>
     <div class="form-group">
-      <label class="form-label">Phone Number</label>
+      <label class="form-label">Phone Number (buyers se contact ke liye)</label>
       <input class="form-input" id="adPhone" type="tel" placeholder="+91 XXXXX XXXXX">
     </div>
-    <button class="submit-btn" onclick="submitAd()">🚀 Post Ad for Free</button>
-  </div>
-</div>
-
-<!-- AUTH MODAL (Login / Register with Firebase Phone OTP) -->
-<div class="overlay" id="authModal" onclick="handleOverlayClick(event,'authModal')">
-  <div class="modal" style="max-width:420px">
-
-    <!-- Step 1: Choose method -->
-    <div id="authStep1">
-      <div class="modal-header">
-        <div class="modal-title" id="authModalTitle">Welcome 👋</div>
-        <button class="close-btn" onclick="hideModal('authModal')">✕</button>
-      </div>
-      <div class="auth-tabs">
-        <button class="auth-tab active" onclick="switchAuthTab('login', this)">Login</button>
-        <button class="auth-tab" onclick="switchAuthTab('register', this)">Create Account</button>
-      </div>
-
-      <!-- Phone OTP login -->
-      <div id="phoneAuthSection">
-        <div class="form-group">
-          <label class="form-label">📱 Phone Number (OTP via SMS)</label>
-          <div class="phone-input-row">
-            <div class="phone-country-code">+91</div>
-            <input class="form-input" id="phoneInput" type="tel" placeholder="98765 43210" maxlength="10">
-          </div>
-        </div>
-        <div id="recaptcha-container"></div>
-        <button class="submit-btn" id="sendOtpBtn" onclick="sendOTP()">
-          📨 Send OTP
-        </button>
-        <div class="divider">or</div>
-        <button class="btn btn-ghost" style="width:100%;justify-content:center;display:flex;" onclick="switchToEmailAuth()">
-          📧 Use Email & Password instead
-        </button>
-      </div>
-
-      <!-- Email auth (fallback) -->
-      <div id="emailAuthSection" style="display:none;">
-        <div class="form-group" id="nameFieldGroup" style="display:none;">
-          <label class="form-label">Full Name</label>
-          <input class="form-input" id="emailName" type="text" placeholder="Your name">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Email</label>
-          <input class="form-input" id="emailInput" type="email" placeholder="you@example.com">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Password</label>
-          <input class="form-input" id="passwordInput" type="password" placeholder="••••••••">
-        </div>
-        <button class="submit-btn" id="emailAuthBtn" onclick="handleEmailAuth()">Login</button>
-        <div class="divider">or</div>
-        <button class="btn btn-ghost" style="width:100%;justify-content:center;display:flex;" onclick="switchToPhoneAuth()">
-          📱 Use Phone OTP instead
-        </button>
-      </div>
-    </div>
-
-    <!-- Step 2: Enter OTP -->
-    <div id="authStep2" style="display:none;">
-      <div class="modal-header">
-        <div class="modal-title">Enter OTP 🔐</div>
-        <button class="close-btn" onclick="hideModal('authModal')">✕</button>
-      </div>
-      <p style="color:var(--muted);font-size:.9rem;margin-bottom:1rem;">
-        We sent a 6-digit code to <strong id="otpSentTo" style="color:var(--text)"></strong>
-      </p>
-      <div class="otp-inputs" id="otpInputs">
-        <input class="otp-input" maxlength="1" type="text" oninput="otpInputNav(this, 0)">
-        <input class="otp-input" maxlength="1" type="text" oninput="otpInputNav(this, 1)">
-        <input class="otp-input" maxlength="1" type="text" oninput="otpInputNav(this, 2)">
-        <input class="otp-input" maxlength="1" type="text" oninput="otpInputNav(this, 3)">
-        <input class="otp-input" maxlength="1" type="text" oninput="otpInputNav(this, 4)">
-        <input class="otp-input" maxlength="1" type="text" oninput="otpInputNav(this, 5)">
-      </div>
-      <!-- Name field for new users after OTP -->
-      <div id="otpNameField" style="display:none;" class="form-group">
-        <label class="form-label">Your Name (for new account)</label>
-        <input class="form-input" id="otpName" type="text" placeholder="Full name">
-      </div>
-      <button class="submit-btn" id="verifyOtpBtn" onclick="verifyOTP()">✅ Verify & Login</button>
-      <p style="text-align:center;margin-top:.75rem;font-size:.82rem;color:var(--muted)">
-        Didn't receive? <span style="color:var(--accent);cursor:pointer;" onclick="resendOTP()">Resend OTP</span>
-      </p>
-    </div>
-
+    <button class="submit-btn" id="adSubmitBtn" onclick="submitAd()">🚀 Ad Post Karo — Free!</button>
   </div>
 </div>
 
@@ -515,70 +448,49 @@
 <div class="toast" id="toast"></div>
 
 <script>
-// ======= STORAGE KEYS =======
-const STORAGE_KEY = 'bazaarnow_listings';
-const STORAGE_IMGS_KEY = 'bazaarnow_imgs_';
-const STORAGE_USERS_KEY = 'bazaarnow_users';
-const STORAGE_CHARGES_KEY = 'bazaarnow_charges';
-const ADMIN_PHONE = '+919528736441'; // Change to your admin phone number
-const ADMIN_EMAIL = 'wazidansari02@gamil.com'; // Change to your admin email
+// ======= CONFIG =======
+const SUPABASE_URL_CFG = 'https://kytailsminhycuhdfirf.supabase.co';
+const ADMIN_EMAIL = 'wazidansari02@gmail.com';
+const STORAGE_KEY = 'bazaarnow_listings_v2';
+const STORAGE_USERS_KEY = 'bazaarnow_users_v2';
 
-// ======= CATEGORY ICONS =======
 const CAT_ICON = {Mobiles:'📱',Cycles:'🚲',Clothes:'👕',Electronics:'💻',Furniture:'🛋️',Books:'📚',Vehicles:'🚗',Other:'📦'};
 
-// ======= CHARGES CONFIG =======
-let charges = loadCharges();
-function loadCharges() {
-  try {
-    const raw = localStorage.getItem(STORAGE_CHARGES_KEY);
-    if (raw) return JSON.parse(raw);
-  } catch(e){}
-  return { listingFeePercent: 5, featuredBoost: 99, premiumPlan: 299 };
+// ======= DEMO PLACEHOLDERS =======
+function makeSvg(label, color) {
+  return 'data:image/svg+xml,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300"><rect width="400" height="300" fill="${color}"/><text x="200" y="140" fill="#ffffff66" text-anchor="middle" font-size="52">${label}</text><text x="200" y="175" fill="#ffffff33" text-anchor="middle" font-size="13" font-family="sans-serif">No Photo</text></svg>`);
 }
-function saveCharges() {
-  try { localStorage.setItem(STORAGE_CHARGES_KEY, JSON.stringify(charges)); } catch(e){}
-  sbSaveCharges(charges);
-}
+const DEMO_PH = {Mobiles:makeSvg('📱','#203050'),Cycles:makeSvg('🚲','#182b18'),Clothes:makeSvg('👕','#2a1a2e'),Electronics:makeSvg('💻','#1a2030'),Furniture:makeSvg('🛋️','#281e10'),Books:makeSvg('📚','#201428'),Vehicles:makeSvg('🚗','#101820'),Other:makeSvg('📦','#1e1e1e')};
 
-// ======= USERS =======
-let users = loadUsers();
-function loadUsers() {
-  try {
-    const raw = localStorage.getItem(STORAGE_USERS_KEY);
-    if (raw) return JSON.parse(raw);
-  } catch(e){}
-  return [];
-}
-function saveUsers() {
-  try { localStorage.setItem(STORAGE_USERS_KEY, JSON.stringify(users)); } catch(e){}
-}
-function upsertUser(uid, data) {
-  const idx = users.findIndex(u => u.uid === uid);
-  if (idx >= 0) { users[idx] = { ...users[idx], ...data }; }
-  else { users.push({ uid, createdAt: Date.now(), ...data }); }
-  saveUsers();
-  sbUpsertUser(uid, data);
-}
-function deleteUserById(uid) {
-  users = users.filter(u => u.uid !== uid);
-  // Also delete their listings
-  listings = listings.filter(l => l.ownerUid !== uid);
-  saveListings(listings);
-  saveUsers();
-}
+const DEFAULT_LISTINGS = [
+  {id:101,title:'iPhone 12 Pro — 128GB Pacific Blue',category:'Mobiles',condition:'Like New',price:28000,location:'Gurugram',desc:'Bought 1.5 years ago. Battery health 89%. All original accessories included.',seller:'Rahul K.',phone:'+91 98765 43210',favs:false,postedAt:Date.now()-7200000,ownerUid:'demo1'},
+  {id:102,title:'Trek MTB Cycle 21-Speed',category:'Cycles',condition:'Good',price:6500,location:'Noida',desc:'Used for 2 years. Gear shifters work fine. New tyres fitted 3 months back.',seller:'Priya S.',phone:'+91 91234 56789',favs:false,postedAt:Date.now()-18000000,ownerUid:'demo2'},
+  {id:103,title:"Levi's Jacket — Size M",category:'Clothes',condition:'Like New',price:800,location:'Delhi',desc:'Worn only twice. Perfect condition. Original MRP ₹3499.',seller:'Amit D.',phone:'+91 87654 32109',favs:false,postedAt:Date.now()-86400000,ownerUid:'demo3'},
+  {id:104,title:'Dell Laptop i5 8th Gen 8GB RAM',category:'Electronics',condition:'Good',price:22000,location:'Faridabad',desc:'Working perfectly. SSD 256GB. Battery backup ~3hrs. Charger included.',seller:'Neha G.',phone:'+91 76543 21098',favs:false,postedAt:Date.now()-172800000,ownerUid:'demo4'},
+  {id:105,title:'Wooden Study Table — Walnut Finish',category:'Furniture',condition:'Good',price:3200,location:'Gurgaon',desc:'Solid wood, 4 ft wide. Minor surface scratches. Self-pickup only.',seller:'Vikram M.',phone:'+91 65432 10987',favs:false,postedAt:Date.now()-259200000,ownerUid:'demo5'},
+  {id:106,title:'UPSC Study Material 2023 Full Set',category:'Books',condition:'Good',price:1200,location:'Delhi',desc:'Complete 18-book set. Very helpful for prelims.',seller:'Sunita R.',phone:'+91 54321 09876',favs:false,postedAt:Date.now()-345600000,ownerUid:'demo6'},
+  {id:107,title:'Honda Activa 5G — 2020 Model',category:'Vehicles',condition:'Good',price:58000,location:'Gurugram',desc:'25,000 km driven. Insurance valid. All documents clear.',seller:'Rahul K.',phone:'+91 98765 43210',favs:false,postedAt:Date.now()-432000000,ownerUid:'demo1'},
+  {id:108,title:'Samsung Galaxy Buds Pro',category:'Mobiles',condition:'Like New',price:4500,location:'Noida',desc:'Used for 3 months. ANC works great. Case and cable included.',seller:'Priya S.',phone:'+91 91234 56789',favs:false,postedAt:Date.now()-518400000,ownerUid:'demo2'},
+];
 
-// ======= AUTH STATE =======
-let currentUser = null; // { uid, name, phone/email, isAdmin }
+// ======= STATE =======
+let currentUser = null;
+let listings = [];
+let users = [];
+let uploadedFiles = [];
+let activeCategory = 'All';
+let activeCondition = 'All';
+let currentSort = 'newest';
 
+// ======= AUTH =======
 window.onAuthChanged = function(sbUser) {
   if (sbUser) {
     const email = sbUser.email || '';
-    const phone = sbUser.phone || sbUser.user_metadata?.phone || '';
-    const name = sbUser.user_metadata?.name || sbUser.user_metadata?.full_name || email;
-    const isAdmin = (email === ADMIN_EMAIL || phone === ADMIN_PHONE);
-    currentUser = { uid: sbUser.id, name, phone, email, isAdmin };
-    upsertUser(sbUser.id, { name, phone, email, isAdmin });
-    sbUpsertUser(sbUser.id, { name, phone, email, isAdmin });
+    const meta = sbUser.user_metadata || {};
+    const name = meta.name || meta.full_name || email.split('@')[0];
+    const isAdmin = email === ADMIN_EMAIL;
+    currentUser = { uid: sbUser.id, name, email, isAdmin };
+    sbUpsertUser(sbUser.id, { name, email, isAdmin });
   } else {
     currentUser = null;
   }
@@ -586,205 +498,90 @@ window.onAuthChanged = function(sbUser) {
   renderListings();
 };
 
-// ======= SUPABASE HELPERS =======
-function isSupabaseReady() {
-  return !!window._supabase && SUPABASE_ANON_KEY !== 'YOUR_ANON_KEY_HERE';
-}
-
+// ======= SUPABASE OPS =======
 async function sbLoadListings() {
-  if (!isSupabaseReady()) return null;
   try {
     const { data, error } = await window._supabase
-      .from('listings')
-      .select('*')
-      .order('posted_at', { ascending: false });
+      .from('listings').select('*').order('posted_at', { ascending: false });
     if (error) throw error;
     return data.map(r => ({
       id: r.id, title: r.title, category: r.category, condition: r.condition,
       price: r.price, location: r.location, desc: r.description,
       seller: r.seller_name, phone: r.seller_phone, imgs: r.images || [],
-      favs: false, postedAt: new Date(r.posted_at).getTime(),
-      userUploaded: true, ownerUid: r.owner_uid, listingFee: r.listing_fee || 0
+      favs: false, postedAt: new Date(r.posted_at).getTime(), ownerUid: r.owner_uid
     }));
-  } catch(e) { console.warn('Supabase load listings error:', e); return null; }
+  } catch(e) { console.warn('Load listings err:', e); return null; }
 }
-
-async function sbSaveListing(listing) {
-  if (!isSupabaseReady()) return false;
+async function sbSaveListing(l) {
   try {
-    const row = {
-      title: listing.title, category: listing.category, condition: listing.condition,
-      price: listing.price, location: listing.location, description: listing.desc,
-      seller_name: listing.seller, seller_phone: listing.phone,
-      images: listing.imgs || [], owner_uid: listing.ownerUid,
-      listing_fee: listing.listingFee || 0,
-      posted_at: new Date(listing.postedAt).toISOString()
-    };
-    const { error } = await window._supabase.from('listings').insert(row);
+    const { error } = await window._supabase.from('listings').insert({
+      title: l.title, category: l.category, condition: l.condition,
+      price: l.price, location: l.location, description: l.desc,
+      seller_name: l.seller, seller_phone: l.phone,
+      images: l.imgs || [], owner_uid: l.ownerUid,
+      posted_at: new Date(l.postedAt).toISOString()
+    });
     if (error) throw error;
     return true;
-  } catch(e) { console.warn('Supabase save listing error:', e); return false; }
+  } catch(e) { console.warn('Save listing err:', e); return false; }
 }
-
 async function sbDeleteListing(id) {
-  if (!isSupabaseReady()) return;
-  try { await window._supabase.from('listings').delete().eq('id', id); }
-  catch(e) { console.warn('Supabase delete listing error:', e); }
+  try { await window._supabase.from('listings').delete().eq('id', id); } catch(e){}
 }
-
+async function sbUpsertUser(uid, data) {
+  try {
+    await window._supabase.from('users').upsert({
+      uid, name: data.name||'', email: data.email||'', is_admin: data.isAdmin||false
+    }, { onConflict: 'uid' });
+  } catch(e){}
+}
 async function sbLoadUsers() {
-  if (!isSupabaseReady()) return null;
   try {
     const { data, error } = await window._supabase.from('users').select('*').order('created_at', { ascending: false });
     if (error) throw error;
     return data.map(r => ({
-      uid: r.uid, name: r.name, phone: r.phone || '', email: r.email || '',
-      isAdmin: r.is_admin || false, createdAt: new Date(r.created_at).getTime()
+      uid: r.uid, name: r.name, email: r.email||'',
+      isAdmin: r.is_admin||false, createdAt: new Date(r.created_at||Date.now()).getTime()
     }));
-  } catch(e) { console.warn('Supabase load users error:', e); return null; }
+  } catch(e) { return []; }
 }
 
-async function sbUpsertUser(uid, data) {
-  if (!isSupabaseReady()) return;
-  try {
-    await window._supabase.from('users').upsert({
-      uid, name: data.name || '', phone: data.phone || '', email: data.email || '',
-      is_admin: data.isAdmin || false
-    }, { onConflict: 'uid' });
-  } catch(e) { console.warn('Supabase upsert user error:', e); }
-}
-
-async function sbDeleteUser(uid) {
-  if (!isSupabaseReady()) return;
-  try {
-    await window._supabase.from('users').delete().eq('uid', uid);
-    await window._supabase.from('listings').delete().eq('owner_uid', uid);
-  } catch(e) { console.warn('Supabase delete user error:', e); }
-}
-
-async function sbLoadCharges() {
-  if (!isSupabaseReady()) return null;
-  try {
-    const { data, error } = await window._supabase.from('settings').select('*').eq('key', 'charges').single();
-    if (error) throw error;
-    return data?.value || null;
-  } catch(e) { return null; }
-}
-
-async function sbSaveCharges(c) {
-  if (!isSupabaseReady()) return;
-  try { await window._supabase.from('settings').upsert({ key: 'charges', value: c }, { onConflict: 'key' }); }
-  catch(e) { console.warn('Supabase save charges error:', e); }
-}
-
-// ======= DEMO DATA =======
-function makePlaceholderSvg(label, color) {
-  const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='400' height='300'><rect width='400' height='300' fill='${color}'/><text x='200' y='130' fill='%23ffffff99' text-anchor='middle' font-size='48'>${encodeURIComponent(label)}</text><text x='200' y='175' fill='%23ffffff55' text-anchor='middle' font-size='14' font-family='sans-serif'>No Photo</text></svg>`;
-  return 'data:image/svg+xml,' + svg;
-}
-const DEMO_PLACEHOLDERS = {
-  Mobiles: makePlaceholderSvg('📱','%23203050'),
-  Cycles: makePlaceholderSvg('🚲','%23182b18'),
-  Clothes: makePlaceholderSvg('👕','%232a1a2e'),
-  Electronics: makePlaceholderSvg('💻','%231a2030'),
-  Furniture: makePlaceholderSvg('🛋️','%23281e10'),
-  Books: makePlaceholderSvg('📚','%23201428'),
-  Vehicles: makePlaceholderSvg('🚗','%23101820'),
-  Other: makePlaceholderSvg('📦','%231e1e1e'),
-};
-
-const DEFAULT_LISTINGS = [
-  {id:1,title:'iPhone 12 Pro — 128GB Pacific Blue',category:'Mobiles',condition:'Like New',price:28000,location:'Gurugram',desc:'Bought 1.5 years ago. Battery health 89%. All original accessories included.',seller:'Rahul K.',phone:'+91 98765 43210',favs:false,time:'2h ago',postedAt:Date.now()-7200000,userUploaded:false,ownerUid:'demo1'},
-  {id:2,title:'Trek MTB Cycle 21-Speed',category:'Cycles',condition:'Good',price:6500,location:'Noida',desc:'Used for 2 years. Gear shifters work fine. New tyres fitted 3 months back.',seller:'Priya S.',phone:'+91 91234 56789',favs:false,time:'5h ago',postedAt:Date.now()-18000000,userUploaded:false,ownerUid:'demo2'},
-  {id:3,title:"Levi's Jacket — Size M (Men)",category:'Clothes',condition:'Like New',price:800,location:'Delhi',desc:'Worn only twice. Perfect condition. Original MRP ₹3499.',seller:'Amit D.',phone:'+91 87654 32109',favs:false,time:'1d ago',postedAt:Date.now()-86400000,userUploaded:false,ownerUid:'demo3'},
-  {id:4,title:'Dell Laptop i5 8th Gen 8GB RAM',category:'Electronics',condition:'Good',price:22000,location:'Faridabad',desc:'Working perfectly. SSD 256GB. Battery backup ~3hrs. Charger included.',seller:'Neha G.',phone:'+91 76543 21098',favs:false,time:'2d ago',postedAt:Date.now()-172800000,userUploaded:false,ownerUid:'demo4'},
-  {id:5,title:'Wooden Study Table — Walnut Finish',category:'Furniture',condition:'Good',price:3200,location:'Gurgaon',desc:'Solid wood, 4 ft wide. Minor surface scratches. Self-pickup only.',seller:'Vikram M.',phone:'+91 65432 10987',favs:false,time:'3d ago',postedAt:Date.now()-259200000,userUploaded:false,ownerUid:'demo5'},
-  {id:6,title:'UPSC Study Material 2023 Full Set',category:'Books',condition:'Good',price:1200,location:'Delhi',desc:'Complete 18-book set. Highlighted but readable. Very helpful for prelims.',seller:'Sunita R.',phone:'+91 54321 09876',favs:false,time:'4d ago',postedAt:Date.now()-345600000,userUploaded:false,ownerUid:'demo6'},
-  {id:7,title:'Honda Activa 5G — 2020 Model',category:'Vehicles',condition:'Good',price:58000,location:'Gurugram',desc:'25,000 km driven. Insurance valid till 2025. All documents clear.',seller:'Rahul K.',phone:'+91 98765 43210',favs:false,time:'5d ago',postedAt:Date.now()-432000000,userUploaded:false,ownerUid:'demo1'},
-  {id:8,title:'Samsung Galaxy Buds Pro',category:'Mobiles',condition:'Like New',price:4500,location:'Noida',desc:'Used for 3 months. ANC works great. Case and cable included.',seller:'Priya S.',phone:'+91 91234 56789',favs:false,time:'6d ago',postedAt:Date.now()-518400000,userUploaded:false,ownerUid:'demo2'},
-];
-
-// ======= PERSISTENCE (Supabase + localStorage fallback) =======
-function saveListings(arr) {
-  try {
-    const meta = arr.map(l => { const {imgs, ...rest} = l; return rest; });
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(meta));
-  } catch(e) {}
-}
-function saveImages(id, imgs) {
-  try { localStorage.setItem(STORAGE_IMGS_KEY + id, JSON.stringify(imgs)); }
-  catch(e) {}
-}
-function loadImages(id, category) {
-  try {
-    const raw = localStorage.getItem(STORAGE_IMGS_KEY + id);
-    if (raw) return JSON.parse(raw);
-  } catch(e){}
-  return [DEMO_PLACEHOLDERS[category] || DEMO_PLACEHOLDERS.Other];
-}
-function loadListings() {
-  // Returns local data first; Supabase loads asynchronously after init
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) {
-      const meta = JSON.parse(raw);
-      return meta.map(l => ({ ...l, imgs: loadImages(l.id, l.category) }));
-    }
-  } catch(e){}
-  const seeded = DEFAULT_LISTINGS.map(l => ({ ...l, imgs: [DEMO_PLACEHOLDERS[l.category]||DEMO_PLACEHOLDERS.Other] }));
-  saveListings(seeded);
-  return seeded;
-}
-function deleteListingStorage(id) {
-  try { localStorage.removeItem(STORAGE_IMGS_KEY + id); } catch(e){}
-}
-async function refreshListingsFromSupabase() {
-  const sbData = await sbLoadListings();
-  if (sbData && sbData.length > 0) {
-    // Merge: Supabase data wins, keep local demo data if Supabase is empty
-    listings = sbData;
-    saveListings(listings);
-    renderListings();
+// ======= INIT =======
+async function init() {
+  // Load session
+  const { data: { session } } = await window._supabase.auth.getSession();
+  if (session?.user) {
+    window.onAuthChanged(session.user);
+  } else {
+    renderNav();
   }
+  // Load listings
+  const sbListings = await sbLoadListings();
+  if (sbListings && sbListings.length > 0) {
+    listings = sbListings;
+  } else {
+    listings = DEFAULT_LISTINGS.map(l => ({...l, imgs:[DEMO_PH[l.category]||DEMO_PH.Other]}));
+  }
+  users = await sbLoadUsers() || [];
+  renderListings();
 }
+init();
 
-// ======= STATE =======
-let listings = loadListings();
-let uploadedFiles = [];
-let activeCategory = 'All';
-let activeCondition = 'All';
-let currentSort = 'newest';
-
-// ======= TIME HELPER =======
-function timeAgo(ts) {
-  const diff = Date.now() - ts;
-  const m = Math.floor(diff/60000);
-  if (m < 1) return 'Just now';
-  if (m < 60) return `${m}m ago`;
-  const h = Math.floor(m/60);
-  if (h < 24) return `${h}h ago`;
-  return `${Math.floor(h/24)}d ago`;
-}
-
-function escHtml(s) {
-  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
-
-// ======= NAV RENDER =======
+// ======= NAV =======
 function renderNav() {
   const nav = document.getElementById('navRight');
   if (currentUser) {
-    const initials = (currentUser.name||'U')[0].toUpperCase();
+    const init = (currentUser.name||'U')[0].toUpperCase();
     nav.innerHTML = `
       <div style="position:relative;" id="userMenuWrap">
-        <button class="user-avatar-btn" onclick="toggleUserMenu()" title="${escHtml(currentUser.name)}">${initials}</button>
+        <button class="user-avatar-btn" onclick="toggleUserMenu()">${init}</button>
         <div class="user-dropdown" id="userDropdown">
           <div class="user-dropdown-info">
-            <div class="user-dropdown-name">${escHtml(currentUser.name)}</div>
-            <div class="user-dropdown-phone">${escHtml(currentUser.phone || currentUser.email || '')}</div>
+            <div class="user-dropdown-name">${esc(currentUser.name)}</div>
+            <div class="user-dropdown-email">${esc(currentUser.email)}</div>
           </div>
-          <div class="user-dropdown-item" onclick="showMainView()">🏠 Marketplace</div>
-          ${currentUser.isAdmin ? `<div class="user-dropdown-item" onclick="showAdminPanel()">⚙️ Admin Panel</div>` : ''}
+          <div class="user-dropdown-item" onclick="closeDropdown();showMainView()">🏠 Marketplace</div>
+          ${currentUser.isAdmin ? `<div class="user-dropdown-item" onclick="closeDropdown();showAdminPanel()">⚙️ Admin Panel</div>` : ''}
           <div class="user-dropdown-item" style="color:var(--accent2);" onclick="handleLogout()">🚪 Logout</div>
         </div>
       </div>
@@ -792,83 +589,271 @@ function renderNav() {
     `;
   } else {
     nav.innerHTML = `
-      <button class="btn btn-ghost" onclick="openAuthModal('login')">Login</button>
-      <button class="btn btn-primary" onclick="openAuthModal('register')">Register</button>
+      <button class="btn btn-ghost" onclick="openAuthModal()">Login</button>
+      <button class="btn btn-primary" onclick="openAuthModal()">Register</button>
     `;
   }
 }
-
-function toggleUserMenu() {
-  document.getElementById('userDropdown').classList.toggle('open');
-}
-document.addEventListener('click', (e) => {
+function toggleUserMenu() { document.getElementById('userDropdown')?.classList.toggle('open'); }
+function closeDropdown() { document.getElementById('userDropdown')?.classList.remove('open'); }
+document.addEventListener('click', e => {
   const wrap = document.getElementById('userMenuWrap');
-  if (wrap && !wrap.contains(e.target)) {
-    const dd = document.getElementById('userDropdown');
-    if (dd) dd.classList.remove('open');
-  }
+  if (wrap && !wrap.contains(e.target)) closeDropdown();
 });
 
 // ======= VIEWS =======
 function showMainView() {
-  document.getElementById('mainView').style.display = '';
-  document.getElementById('adminView').style.display = 'none';
-  document.getElementById('sellFab').style.display = '';
-  const dd = document.getElementById('userDropdown');
-  if (dd) dd.classList.remove('open');
+  document.getElementById('mainView').style.display='';
+  document.getElementById('adminView').style.display='none';
+  document.getElementById('sellFab').style.display='';
+}
+function showAdminPanel() {
+  if (!currentUser?.isAdmin) { showToast('⛔ Admin only', true); return; }
+  document.getElementById('mainView').style.display='none';
+  document.getElementById('adminView').style.display='';
+  document.getElementById('sellFab').style.display='none';
+  renderAdminPanel();
 }
 
-function showAdminPanel() {
-  if (!currentUser || !currentUser.isAdmin) { showToast('⛔ Admin access only', true); return; }
-  document.getElementById('mainView').style.display = 'none';
-  document.getElementById('adminView').style.display = '';
-  document.getElementById('sellFab').style.display = 'none';
-  const dd = document.getElementById('userDropdown');
-  if (dd) dd.classList.remove('open');
-  renderAdminPanel();
+// ======= HELPERS =======
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function timeAgo(ts) {
+  const d=Date.now()-ts, m=Math.floor(d/60000);
+  if(m<1) return 'Just now'; if(m<60) return m+'m ago';
+  const h=Math.floor(m/60); if(h<24) return h+'h ago';
+  return Math.floor(h/24)+'d ago';
+}
+function showToast(msg, isErr=false) {
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.className='toast'+(isErr?' error':'');
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 3500);
+}
+function showModal(id) { document.getElementById(id).classList.add('open'); document.body.style.overflow='hidden'; }
+function hideModal(id) { document.getElementById(id).classList.remove('open'); document.body.style.overflow=''; }
+function handleOverlayClick(e, id) { if (e.target.classList.contains('overlay')) hideModal(id); }
+
+// ======= AUTH MODAL (EMAIL OTP via Supabase) =======
+function openAuthModal() {
+  document.getElementById('authStep1').style.display='';
+  document.getElementById('authStep2').style.display='none';
+  document.getElementById('authEmail').value='';
+  clearOtpInputs();
+  showModal('authModal');
+}
+function goBackToStep1() {
+  document.getElementById('authStep1').style.display='';
+  document.getElementById('authStep2').style.display='none';
+  clearOtpInputs();
+}
+function clearOtpInputs() {
+  document.querySelectorAll('.otp-input').forEach(i => i.value='');
+}
+
+async function sendEmailOTP() {
+  const email = document.getElementById('authEmail').value.trim().toLowerCase();
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    showToast('⚠️ Sahi email address daalo', true); return;
+  }
+  const btn = document.getElementById('sendOtpBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Bheja ja raha hai…';
+
+  try {
+    const { error } = await window._supabase.auth.signInWithOtp({
+      email,
+      options: {
+        shouldCreateUser: true, // naye user ke liye account bhi ban jayega
+      }
+    });
+    if (error) throw error;
+    document.getElementById('otpSentTo').textContent = email;
+    document.getElementById('authStep1').style.display='none';
+    document.getElementById('authStep2').style.display='';
+    clearOtpInputs();
+    setTimeout(()=>document.querySelectorAll('.otp-input')[0]?.focus(), 100);
+    showToast('📧 OTP bhej diya! Email check karo.');
+  } catch(e) {
+    showToast('❌ ' + (e.message || 'OTP bhejne mein error'), true);
+  }
+  btn.disabled = false;
+  btn.innerHTML = '📨 OTP Bhejo';
+}
+
+async function resendEmailOTP() {
+  goBackToStep1();
+  setTimeout(() => {
+    const email = document.getElementById('authEmail').value.trim();
+    if (email) sendEmailOTP();
+  }, 100);
+}
+
+async function verifyEmailOTP() {
+  const inputs = document.querySelectorAll('.otp-input');
+  const token = [...inputs].map(i=>i.value).join('');
+  if (token.length !== 6) { showToast('⚠️ 6 digit OTP daalo', true); return; }
+
+  const email = document.getElementById('otpSentTo').textContent.trim();
+  const name = document.getElementById('authNameStep2').value.trim();
+
+  const btn = document.getElementById('verifyOtpBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Verify ho raha hai…';
+
+  try {
+    const { data, error } = await window._supabase.auth.verifyOtp({
+      email,
+      token,
+      type: 'email'
+    });
+    if (error) throw error;
+
+    // Name update karo agar diya hai
+    if (name && data.user) {
+      await window._supabase.auth.updateUser({ data: { name } });
+    }
+
+    hideModal('authModal');
+    showToast('🎉 Login ho gaye! Welcome ' + (name || email.split('@')[0]) + '!');
+  } catch(e) {
+    const msg = e.message || 'OTP galat hai ya expire ho gaya';
+    showToast('❌ ' + msg, true);
+  }
+  btn.disabled = false;
+  btn.innerHTML = '✅ Verify & Login';
+}
+
+function otpNav(input, idx) {
+  input.value = input.value.replace(/\D/g, '');
+  if (input.value && idx < 5) {
+    document.querySelectorAll('.otp-input')[idx+1]?.focus();
+  }
+  // Auto-verify when all 6 filled
+  const all = [...document.querySelectorAll('.otp-input')].map(i=>i.value);
+  if (all.every(v=>v) && all.join('').length===6) verifyEmailOTP();
+}
+function otpBack(e, idx) {
+  if (e.key === 'Backspace' && !e.target.value && idx > 0) {
+    document.querySelectorAll('.otp-input')[idx-1]?.focus();
+  }
+}
+
+async function handleLogout() {
+  await window._supabase.auth.signOut();
+  currentUser = null;
+  renderNav();
+  renderListings();
+  showToast('👋 Logout ho gaye');
+  showMainView();
+}
+
+// ======= SELL =======
+function handleSellClick() {
+  if (!currentUser) { showToast('🔒 Pehle login karo'); openAuthModal(); return; }
+  const n=document.getElementById('adSeller'); if(n&&currentUser.name) n.value=currentUser.name;
+  showModal('sellModal');
+}
+
+// ======= UPLOAD (Cloudinary) =======
+async function uploadToCloudinary(file) {
+  const fd = new FormData();
+  fd.append('file', file);
+  fd.append('upload_preset', 'my_upload');
+  const res = await fetch('https://api.cloudinary.com/v1_1/dada2emui/image/upload', { method:'POST', body:fd });
+  const d = await res.json();
+  if (!d.secure_url) throw new Error('Upload failed');
+  return d.secure_url;
+}
+async function handleFiles(files) {
+  uploadedFiles = [];
+  const grid = document.getElementById('previewGrid');
+  const status = document.getElementById('uploadStatus');
+  grid.innerHTML = '';
+  status.textContent = '⏳ Photos upload ho rahi hain…';
+  for (let f of [...files].slice(0,6)) {
+    try {
+      const url = await uploadToCloudinary(f);
+      uploadedFiles.push(url);
+      grid.innerHTML += `<div class="preview-item"><img src="${url}"><button onclick="removeImg(${uploadedFiles.length-1})">✕</button></div>`;
+    } catch(e) { status.textContent = '❌ Ek photo upload nahi hui'; }
+  }
+  status.textContent = uploadedFiles.length ? `✅ ${uploadedFiles.length} photo(s) ready` : '';
+}
+function removeImg(i) { uploadedFiles.splice(i,1); document.getElementById('uploadStatus').textContent=uploadedFiles.length?`✅ ${uploadedFiles.length} photo(s) ready`:''; }
+
+// ======= SUBMIT AD =======
+async function submitAd() {
+  if (!currentUser) { showToast('🔒 Login karke ad post karo', true); openAuthModal(); return; }
+  const title=document.getElementById('adTitle').value.trim();
+  const category=document.getElementById('adCategory').value;
+  const condition=document.getElementById('adCondition').value;
+  const price=parseInt(document.getElementById('adPrice').value)||0;
+  const location=document.getElementById('adLocation').value.trim();
+  const desc=document.getElementById('adDesc').value.trim();
+  const seller=document.getElementById('adSeller').value.trim();
+  const phone=document.getElementById('adPhone').value.trim();
+  if (!title||!category||!condition||!price||!location||!seller) {
+    showToast('⚠️ Saare zaruri fields bharo', true); return;
+  }
+  const btn = document.getElementById('adSubmitBtn');
+  btn.disabled=true; btn.innerHTML='<span class="spinner"></span> Post ho raha hai…';
+
+  const id = Date.now();
+  const imgs = uploadedFiles.length ? uploadedFiles : [DEMO_PH[category]||DEMO_PH.Other];
+  const newL = { id, title, category, condition, price, location, desc: desc||'No description.',
+    seller, phone: phone||'Not provided', imgs, favs:false,
+    postedAt: Date.now(), ownerUid: currentUser.uid };
+
+  await sbSaveListing(newL);
+  listings.unshift(newL);
+  hideModal('sellModal');
+  resetSellForm();
+  renderListings();
+  showToast('🎉 Ad post ho gaya! Sab dekh sakte hain!');
+  btn.disabled=false; btn.innerHTML='🚀 Ad Post Karo — Free!';
+}
+function resetSellForm() {
+  ['adTitle','adPrice','adLocation','adDesc','adSeller','adPhone'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('adCategory').value='';
+  document.getElementById('adCondition').value='';
+  uploadedFiles=[];
+  document.getElementById('previewGrid').innerHTML='';
+  document.getElementById('uploadStatus').textContent='';
 }
 
 // ======= RENDER LISTINGS =======
 function renderListings() {
-  let filtered = listings.map(l => ({...l, time: l.postedAt ? timeAgo(l.postedAt) : l.time}));
+  let filtered = [...listings];
   const q = document.getElementById('searchInput').value.toLowerCase();
-  if (q) filtered = filtered.filter(l => l.title.toLowerCase().includes(q) || l.category.toLowerCase().includes(q) || l.location.toLowerCase().includes(q));
-  if (activeCategory !== 'All') filtered = filtered.filter(l => l.category === activeCategory);
-  if (activeCondition !== 'All') filtered = filtered.filter(l => l.condition === activeCondition);
-  if (currentSort === 'price_asc') filtered.sort((a,b) => a.price - b.price);
-  else if (currentSort === 'price_desc') filtered.sort((a,b) => b.price - a.price);
-  else filtered.sort((a,b) => (b.postedAt||0) - (a.postedAt||0));
+  if (q) filtered = filtered.filter(l=>l.title.toLowerCase().includes(q)||l.category.toLowerCase().includes(q)||l.location.toLowerCase().includes(q));
+  if (activeCategory!=='All') filtered=filtered.filter(l=>l.category===activeCategory);
+  if (activeCondition!=='All') filtered=filtered.filter(l=>l.condition===activeCondition);
+  if (currentSort==='price_asc') filtered.sort((a,b)=>a.price-b.price);
+  else if (currentSort==='price_desc') filtered.sort((a,b)=>b.price-a.price);
+  else filtered.sort((a,b)=>(b.postedAt||0)-(a.postedAt||0));
 
   const grid = document.getElementById('listingsGrid');
-  document.getElementById('listingCount').textContent = `${filtered.length} ads`;
-  document.getElementById('gridTitle').textContent = activeCategory === 'All' ? 'All Listings' : activeCategory;
+  document.getElementById('listingCount').textContent = filtered.length+' ads';
+  document.getElementById('gridTitle').textContent = activeCategory==='All'?'All Listings':activeCategory;
 
   if (!filtered.length) {
-    grid.innerHTML = `<div class="empty" style="grid-column:1/-1"><svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2"><circle cx="32" cy="32" r="28"/><path d="M20 44 L44 20M20 20 L44 44"/></svg><p>No listings found</p></div>`;
-    return;
+    grid.innerHTML='<div class="empty"><p>Koi listing nahi mili</p></div>'; return;
   }
-
-  const noImgSvg = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='300'%3E%3Crect width='400' height='300' fill='%231e1d1b'/%3E%3Ctext x='200' y='160' fill='%238a8680' text-anchor='middle' font-size='14' font-family='sans-serif'%3ENo Image%3C/text%3E%3C/svg%3E";
-  const feeMultiplier = 1 + (charges.listingFeePercent / 100);
-
+  const noImg="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='300'%3E%3Crect width='400' height='300' fill='%231e1d1b'/%3E%3Ctext x='200' y='160' fill='%238a8680' text-anchor='middle' font-size='14' font-family='sans-serif'%3ENo Image%3C/text%3E%3C/svg%3E";
   grid.innerHTML = filtered.map(l => {
-    const imgSrc = (l.imgs && l.imgs[0]) ? l.imgs[0] : noImgSvg;
-    const isOwn = currentUser && l.ownerUid === currentUser.uid;
-    return `
-    <div class="card" onclick="openDetail(${l.id})">
+    const img = (l.imgs&&l.imgs[0]) ? l.imgs[0] : noImg;
+    const isOwn = currentUser && l.ownerUid===currentUser.uid;
+    return `<div class="card" onclick="openDetail(${l.id})">
       <div class="card-img-wrapper">
-        <img src="${imgSrc}" alt="${escHtml(l.title)}" loading="lazy" onerror="this.src='${noImgSvg}'">
+        <img src="${img}" alt="${esc(l.title)}" loading="lazy" onerror="this.src='${noImg}'">
         <div class="card-badge">${l.condition}</div>
-        ${isOwn ? `<div style="position:absolute;bottom:.5rem;left:.5rem;background:var(--green);color:#000;font-size:.65rem;font-weight:700;padding:.15rem .45rem;border-radius:4px;">YOUR AD</div>` : ''}
+        ${isOwn?`<div style="position:absolute;bottom:.5rem;left:.5rem;background:var(--green);color:#000;font-size:.65rem;font-weight:700;padding:.15rem .45rem;border-radius:4px;">YOUR AD</div>`:''}
         <button class="card-fav ${l.favs?'active':''}" onclick="toggleFav(event,${l.id})">${l.favs?'❤️':'🤍'}</button>
       </div>
       <div class="card-body">
-        <div class="card-price">₹${Math.round(l.price * feeMultiplier).toLocaleString('en-IN')}</div>
-        <div class="card-title">${escHtml(l.title)}</div>
-        <div class="card-meta">
-          <span>📍 ${escHtml(l.location)}</span><span class="dot"></span>
-          <span>${l.time || timeAgo(l.postedAt)}</span>
-        </div>
+        <div class="card-price">₹${l.price.toLocaleString('en-IN')}</div>
+        <div class="card-title">${esc(l.title)}</div>
+        <div class="card-meta"><span>📍 ${esc(l.location)}</span><span class="dot"></span><span>${timeAgo(l.postedAt)}</span></div>
       </div>
     </div>`;
   }).join('');
@@ -876,540 +861,170 @@ function renderListings() {
 
 // ======= FILTERS =======
 function filterCat(cat, el) {
-  activeCategory = cat;
-  document.querySelectorAll('.cat-pill').forEach(p => p.classList.remove('active'));
+  activeCategory=cat;
+  document.querySelectorAll('.cat-pill').forEach(p=>p.classList.remove('active'));
   el.classList.add('active');
   renderListings();
 }
-function filterCondition(cond, el) {
-  activeCondition = cond;
-  document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+function filterCondition(c, el) {
+  activeCondition=c;
+  document.querySelectorAll('.filter-chip').forEach(f=>f.classList.remove('active'));
   el.classList.add('active');
   renderListings();
 }
-function filterListings() { renderListings(); }
-function sortListings(val) { currentSort = val; renderListings(); }
-
-// ======= MODAL =======
-function showModal(id) { document.getElementById(id).classList.add('open'); document.body.style.overflow='hidden'; }
-function hideModal(id) { document.getElementById(id).classList.remove('open'); document.body.style.overflow=''; }
-function handleOverlayClick(e, id) { if (e.target.classList.contains('overlay')) hideModal(id); }
-
-// ======= AUTH MODAL =======
-let authMode = 'login';
-let confirmationResult = null;
-let recaptchaVerifier = null;
-
-function openAuthModal(mode) {
-  authMode = mode;
-  switchAuthTab(mode, null);
-  document.getElementById('authStep1').style.display = '';
-  document.getElementById('authStep2').style.display = 'none';
-  document.getElementById('authModalTitle').textContent = mode === 'login' ? 'Welcome Back 👋' : 'Create Account 🎉';
-  showModal('authModal');
-  // Init recaptcha after modal is visible
-  setTimeout(() => initRecaptcha(), 300);
+function toggleFav(e, id) {
+  e.stopPropagation();
+  const l=listings.find(x=>x.id===id);
+  if(l) { l.favs=!l.favs; showToast(l.favs?'❤️ Wishlist mein add kiya':'Wishlist se hataya'); renderListings(); }
 }
 
-function switchAuthTab(mode, el) {
-  authMode = mode;
-  document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
-  if (el) el.classList.add('active');
-  else {
-    document.querySelectorAll('.auth-tab').forEach((t, i) => {
-      if ((i === 0 && mode === 'login') || (i === 1 && mode === 'register')) t.classList.add('active');
-    });
-  }
-  const nameField = document.getElementById('nameFieldGroup');
-  if (nameField) nameField.style.display = mode === 'register' ? '' : 'none';
-  const emailBtn = document.getElementById('emailAuthBtn');
-  if (emailBtn) emailBtn.textContent = mode === 'login' ? 'Login' : 'Create Account';
-  // Show OTP name for register
-  const otpNameDiv = document.getElementById('otpNameField');
-  if (otpNameDiv) otpNameDiv.style.display = mode === 'register' ? '' : 'none';
-}
-
-function switchToEmailAuth() {
-  document.getElementById('phoneAuthSection').style.display = 'none';
-  document.getElementById('emailAuthSection').style.display = '';
-  const nameField = document.getElementById('nameFieldGroup');
-  if (nameField) nameField.style.display = authMode === 'register' ? '' : 'none';
-  const emailBtn = document.getElementById('emailAuthBtn');
-  if (emailBtn) emailBtn.textContent = authMode === 'login' ? 'Login' : 'Create Account';
-}
-function switchToPhoneAuth() {
-  document.getElementById('phoneAuthSection').style.display = '';
-  document.getElementById('emailAuthSection').style.display = 'none';
-}
-
-function initRecaptcha() {
-  // Not needed with Supabase — using demo OTP mode
-  // For real SMS OTP, use Supabase Pro plan or Twilio
-}
-
-async function sendOTP() {
-  const phone = document.getElementById('phoneInput').value.trim().replace(/\s/g,'');
-  if (phone.length !== 10 || !/^\d{10}$/.test(phone)) {
-    showToast('⚠️ Enter a valid 10-digit phone number', true); return;
-  }
-  const fullPhone = '+91' + phone;
-
-  // Phone OTP demo mode (Supabase phone auth needs Pro plan)
-  // Use email login instead for real auth
-  showToast('📱 Demo mode: any 6-digit OTP works');
-  document.getElementById('otpSentTo').textContent = fullPhone;
-  document.getElementById('authStep1').style.display = 'none';
-  document.getElementById('authStep2').style.display = '';
-  confirmationResult = { _demoPhone: fullPhone };
-}
-
-function resendOTP() {
-  document.getElementById('authStep2').style.display = 'none';
-  document.getElementById('authStep1').style.display = '';
-  const btn = document.getElementById('sendOtpBtn');
-  btn.disabled = false;
-  btn.innerHTML = '📨 Send OTP';
-  setTimeout(() => initRecaptcha(), 300);
-}
-
-function otpInputNav(input, idx) {
-  input.value = input.value.replace(/\D/,'');
-  if (input.value && idx < 5) {
-    const inputs = document.querySelectorAll('.otp-input');
-    inputs[idx + 1].focus();
-  }
-}
-
-async function verifyOTP() {
-  const inputs = document.querySelectorAll('.otp-input');
-  const code = [...inputs].map(i => i.value).join('');
-  if (code.length !== 6) { showToast('⚠️ Enter all 6 digits', true); return; }
-
-  const btn = document.getElementById('verifyOtpBtn');
-  btn.disabled = true;
-  btn.innerHTML = '<span class="spinner"></span> Verifying…';
-
-  // Demo mode OTP (any 6 digits work)
-  const phone = confirmationResult?._demoPhone || '+91XXXXXXXXXX';
-  const name = document.getElementById('otpName').value.trim() || phone;
-  currentUser = { uid: 'demo_' + Date.now(), name, phone, email: '', isAdmin: (phone === ADMIN_PHONE) };
-  upsertUser(currentUser.uid, { name, phone, email: '', isAdmin: currentUser.isAdmin });
-  sbUpsertUser(currentUser.uid, { name, phone, email: '', isAdmin: currentUser.isAdmin });
-  hideModal('authModal');
-  renderNav();
-  renderListings();
-  showToast('✅ Welcome, ' + name + '!');
-  btn.disabled = false;
-  btn.innerHTML = '✅ Verify & Login';
-}
-
-async function handleEmailAuth() {
-  const email = document.getElementById('emailInput').value.trim();
-  const password = document.getElementById('passwordInput').value;
-  const name = document.getElementById('emailName').value.trim();
-  if (!email || !password) { showToast('⚠️ Enter email and password', true); return; }
-
-  const btn = document.getElementById('emailAuthBtn');
-  btn.disabled = true;
-  btn.innerHTML = '<span class="spinner"></span> Please wait…';
-
-  if (!isSupabaseReady()) {
-    // Demo mode
-    currentUser = { uid: 'demo_email_' + Date.now(), name: name || email, phone: '', email, isAdmin: (email === ADMIN_EMAIL) };
-    upsertUser(currentUser.uid, { name: currentUser.name, phone: '', email, isAdmin: currentUser.isAdmin });
-    hideModal('authModal');
-    renderNav();
-    renderListings();
-    showToast('✅ Welcome, ' + currentUser.name + '! (Demo Mode)');
-    btn.disabled = false;
-    btn.innerHTML = authMode === 'login' ? 'Login' : 'Create Account';
-    return;
-  }
-
-  try {
-    let result;
-    if (authMode === 'register') {
-      result = await window._supabase.auth.signUp({
-  email,
-  password,
-  options: {
-    emailRedirectTo: window.location.origin + '/bazaar/'
-  }
-});
-      if (result.error) throw result.error;
-      showToast('✅ Account created! Please check your email to confirm.');
-    } else {
-      result = await window._supabase.auth.signInWithPassword({ email, password });
-      if (result.error) throw result.error;
-      showToast('✅ Welcome back!');
-    }
-    hideModal('authModal');
-  } catch(e) {
-    const msgs = {
-      'Invalid login credentials': 'Wrong email or password',
-      'User already registered': 'Email already in use',
-      'Password should be at least 6 characters': 'Password too weak (min 6 chars)'
-    };
-    showToast('❌ ' + (msgs[e.message] || e.message), true);
-  }
-  btn.disabled = false;
-  btn.innerHTML = authMode === 'login' ? 'Login' : 'Create Account';
-}
-
-async function handleLogout() {
-  if (isSupabaseReady()) {
-    await window._supabase.auth.signOut();
-  }
-  currentUser = null;
-  renderNav();
-  renderListings();
-  showToast('👋 Logged out');
-  showMainView();
-}
-
-// ======= SELL =======
-function handleSellClick() {
-  if (!currentUser) {
-    showToast('🔒 Please login first to post an ad');
-    openAuthModal('login');
-    return;
-  }
-  // Pre-fill seller name
-  const nameField = document.getElementById('adSeller');
-  if (nameField && currentUser.name) nameField.value = currentUser.name;
-  const phoneField = document.getElementById('adPhone');
-  if (phoneField && currentUser.phone) phoneField.value = currentUser.phone;
-  showModal('sellModal');
-}
-
-// ======= DETAIL =======
+// ======= DETAIL MODAL =======
 function openDetail(id) {
-  const l = listings.find(x => x.id === id);
+  const l = listings.find(x=>x.id===id);
   if (!l) return;
-  const imgs = (l.imgs && l.imgs.length > 0) ? l.imgs : [DEMO_PLACEHOLDERS[l.category]||DEMO_PLACEHOLDERS.Other];
-  const thumbsHtml = imgs.length > 1
+  const imgs = (l.imgs&&l.imgs.length) ? l.imgs : [DEMO_PH[l.category]||DEMO_PH.Other];
+  const thumbs = imgs.length>1
     ? `<div class="detail-thumbs">${imgs.map((img,i)=>`<img class="detail-thumb ${i===0?'active':''}" src="${img}" onclick="switchImg(this,'${img}')">`).join('')}</div>`
     : '';
-  const isOwn = currentUser && l.ownerUid === currentUser.uid;
-  const isAdmin = currentUser && currentUser.isAdmin;
-  const feeMultiplier = 1 + (charges.listingFeePercent / 100);
+  const isOwn = currentUser && l.ownerUid===currentUser.uid;
+  const isAdmin = currentUser?.isAdmin;
 
-  // Seller contact: only shown to logged-in users
-  let contactHtml = '';
+  // ✅ CONTACT SECTION — only for logged-in users
+  let contactSection = '';
   if (currentUser) {
-    contactHtml = `<button class="contact-btn" onclick="showToast('📞 ${escHtml(l.phone || 'No number')}')">📞 Contact Seller · ${escHtml(l.phone || 'Not provided')}</button>`;
+    // Logged in → show contact details
+    contactSection = `
+      <div class="contact-reveal">
+        <div style="font-size:1.5rem;">📞</div>
+        <div>
+          <div style="font-size:.8rem;color:var(--muted);margin-bottom:.2rem;">Seller ka Number</div>
+          <div class="contact-phone">${esc(l.phone||'Number nahi diya')}</div>
+        </div>
+        ${l.phone && l.phone!=='Not provided' ? `<a href="tel:${esc(l.phone)}" style="margin-left:auto;" onclick="event.stopPropagation()"><button class="contact-btn" style="width:auto;padding:.6rem 1.2rem;margin:0;">📲 Call</button></a>` : ''}
+      </div>
+      <a href="https://wa.me/${(l.phone||'').replace(/[^0-9]/g,'')}" target="_blank" onclick="event.stopPropagation()">
+        <button class="contact-btn" style="background:#25D366;">💬 WhatsApp par Message Karo</button>
+      </a>
+    `;
   } else {
-    contactHtml = `<div class="login-gate">🔒 <strong onclick="openAuthModal('login')">Login</strong> to see seller's phone number & contact them</div>
-    <button class="submit-btn" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);" onclick="openAuthModal('login')">🔑 Login to Contact Seller</button>`;
+    // Not logged in → show gate
+    contactSection = `
+      <div class="login-gate">
+        <p>🔒 Seller ka number aur contact details dekhne ke liye <strong>login karna zaroori hai</strong></p>
+        <button class="submit-btn" onclick="hideModal('detailModal');openAuthModal()">🔑 Login / Register karke dekhein</button>
+      </div>
+    `;
   }
 
   document.getElementById('detailContent').innerHTML = `
     <div class="modal-header">
-      <div class="modal-title">${CAT_ICON[l.category]||'📦'} ${escHtml(l.category)}</div>
+      <div class="modal-title">${CAT_ICON[l.category]||'📦'} ${esc(l.category)}</div>
       <div style="display:flex;gap:.5rem;align-items:center;">
-        ${(isOwn || isAdmin) ? `<button class="close-btn" style="background:var(--accent2);border-color:var(--accent2);color:#fff;width:auto;padding:0 .75rem;" onclick="deleteAd(${l.id})">🗑 Delete</button>` : ''}
+        ${(isOwn||isAdmin)?`<button class="close-btn" style="background:var(--accent2);border-color:var(--accent2);color:#fff;width:auto;padding:0 .75rem;font-size:.85rem;" onclick="deleteAd(${l.id})">🗑 Delete</button>`:''}
         <button class="close-btn" onclick="hideModal('detailModal')">✕</button>
       </div>
     </div>
     <div class="detail-imgs">
-      <img class="detail-main-img" id="mainImg" src="${imgs[0]}" alt="${escHtml(l.title)}">
-      ${thumbsHtml}
+      <img class="detail-main-img" id="mainImg" src="${imgs[0]}" alt="${esc(l.title)}">
+      ${thumbs}
     </div>
-    <div class="detail-price">₹${Math.round(l.price * feeMultiplier).toLocaleString('en-IN')}</div>
-    <div class="detail-title">${escHtml(l.title)}</div>
+    <div class="detail-price">₹${l.price.toLocaleString('en-IN')}</div>
+    <div class="detail-title">${esc(l.title)}</div>
     <div class="detail-meta">
-      <span class="detail-tag">📍 ${escHtml(l.location)}</span>
+      <span class="detail-tag">📍 ${esc(l.location)}</span>
       <span class="detail-tag">🏷️ ${l.condition}</span>
-      <span class="detail-tag">🕒 ${l.postedAt ? timeAgo(l.postedAt) : l.time}</span>
-      ${imgs.length > 1 ? `<span class="detail-tag">📷 ${imgs.length} photos</span>` : ''}
+      <span class="detail-tag">🕒 ${timeAgo(l.postedAt)}</span>
+      ${imgs.length>1?`<span class="detail-tag">📷 ${imgs.length} photos</span>`:''}
     </div>
-    <div class="detail-desc">${escHtml(l.desc || 'No description provided.')}</div>
+    <div class="detail-desc">${esc(l.desc||'No description provided.')}</div>
     <div class="detail-seller">
       <div class="seller-avatar">${(l.seller||'?')[0].toUpperCase()}</div>
       <div>
-        <div class="seller-name">${escHtml(l.seller)}</div>
-        <div class="seller-sub">${isOwn ? '✅ Your listing' : 'Verified seller'}</div>
+        <div class="seller-name">${esc(l.seller)}</div>
+        <div class="seller-sub">${isOwn?'✅ Aapki listing':'Verified Seller'}</div>
       </div>
     </div>
-    ${contactHtml}
+    ${contactSection}
   `;
   showModal('detailModal');
 }
 function switchImg(el, src) {
-  document.getElementById('mainImg').src = src;
-  document.querySelectorAll('.detail-thumb').forEach(t => t.classList.remove('active'));
+  document.getElementById('mainImg').src=src;
+  document.querySelectorAll('.detail-thumb').forEach(t=>t.classList.remove('active'));
   el.classList.add('active');
 }
 
 // ======= DELETE AD =======
 async function deleteAd(id) {
   if (!confirm('Yeh listing delete karna chahte ho?')) return;
-  listings = listings.filter(l => l.id !== id);
-  await deleteListingFromSupabase(id);
+  await sbDeleteListing(id);
+  listings=listings.filter(l=>l.id!==id);
   hideModal('detailModal');
   renderListings();
   showToast('🗑️ Ad delete ho gaya');
 }
 
-// ======= FAV =======
-function toggleFav(e, id) {
-  e.stopPropagation();
-  const l = listings.find(x => x.id === id);
-  l.favs = !l.favs;
-  saveListings(listings);
-  showToast(l.favs ? '❤️ Added to wishlist' : 'Removed from wishlist');
-  renderListings();
-}
-
-// ======= UPLOAD =======
-function compressImage(dataUrl, maxWidth, quality, cb) {
-  const img = new Image();
-  img.onload = () => {
-    const canvas = document.createElement('canvas');
-    let w = img.width, h = img.height;
-    if (w > maxWidth) { h = Math.round(h * maxWidth / w); w = maxWidth; }
-    canvas.width = w; canvas.height = h;
-    canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-    cb(canvas.toDataURL('image/jpeg', quality));
-  };
-  img.src = dataUrl;
-}
-async function handleFiles(files) {
-  uploadedFiles = [];
-  const previewGrid = document.getElementById('previewGrid');
-  previewGrid.innerHTML = "Uploading... ⏳";
-
-  for (let file of files) {
-    try {
-      const url = await uploadToCloudinary(file);
-      uploadedFiles.push(url);
-    } catch (e) {
-      console.error("Upload failed", e);
-    }
-  }
-
-  previewGrid.innerHTML = uploadedFiles.map((img, i) => `
-    <div class="preview-item">
-      <img src="${img}">
-      <button onclick="removeImage(${i})">✕</button>
-    </div>
-  `).join('');
-}
-function removeFile(i) { uploadedFiles.splice(i, 1); renderPreviews(); showStorageInfo(); }
-function showStorageInfo() {
-  const el = document.getElementById('storageInfo');
-  if (el) el.textContent = '☁️ Data Supabase cloud mein save ho raha hai';
-}
-
-// ======= SUBMIT AD (Supabase) =======
-async function submitAd() {
-  if (!currentUser) { showToast('🔒 Login karke ad post karo', true); openAuthModal('login'); return; }
-  const title = document.getElementById('adTitle').value.trim();
-  const category = document.getElementById('adCategory').value;
-  const condition = document.getElementById('adCondition').value;
-  const price = parseInt(document.getElementById('adPrice').value);
-  const location = document.getElementById('adLocation').value.trim();
-  const desc = document.getElementById('adDesc').value.trim();
-  const seller = document.getElementById('adSeller').value.trim();
-  const phone = document.getElementById('adPhone').value.trim();
-  if (!title || !category || !condition || !price || !location || !seller) {
-    showToast('⚠️ Saare required fields bharo', true); return;
-  }
-  const id = Date.now();
-  const imgs = uploadedFiles.length > 0 ? uploadedFiles : [DEMO_PLACEHOLDERS[category] || DEMO_PLACEHOLDERS.Other];
-  const newListing = {
-    id, title, category, condition, price, location,
-    desc: desc || 'No description provided.',
-    seller, phone: phone || 'Not provided',
-    imgs, favs: false, time: 'Just now',
-    postedAt: Date.now(), userUploaded: true,
-    ownerUid: currentUser.uid, ownerEmail: currentUser.email || '',
-    listingFee: Math.round(price * (charges.listingFeePercent/100))
-  };
-
-  const submitBtn = document.querySelector('#sellModal .submit-btn');
-  if (submitBtn) { submitBtn.disabled = true; submitBtn.innerHTML = '<span class="spinner"></span> Posting…'; }
-
-  await saveListingToSupabase(newListing);
-  listings.unshift(newListing);
-  hideModal('sellModal');
-  resetForm();
-  renderListings();
-  showToast('🎉 Ad post ho gaya! Ab sab dekh sakte hain!');
-
-  if (submitBtn) { submitBtn.disabled = false; submitBtn.innerHTML = '🚀 Post Ad'; }
-}
-function resetForm() {
-  ['adTitle','adPrice','adLocation','adDesc','adSeller','adPhone'].forEach(id => document.getElementById(id).value = '');
-  document.getElementById('adCategory').value = '';
-  document.getElementById('adCondition').value = '';
-  uploadedFiles = [];
-  renderPreviews();
-}
-
-// ======= TOAST =======
-function showToast(msg, isError = false) {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.classList.remove('error');
-  if (isError) t.classList.add('error');
-  t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 3000);
-}
-
 // ======= ADMIN PANEL =======
 function renderAdminPanel() {
-  // Stats
-  const totalRevenue = listings.reduce((s, l) => s + (l.listingFee || 0), 0);
   document.getElementById('adminStats').innerHTML = `
     <div class="admin-stat"><div class="admin-stat-label">Total Listings</div><div class="admin-stat-value">${listings.length}</div></div>
     <div class="admin-stat"><div class="admin-stat-label">Registered Users</div><div class="admin-stat-value">${users.length}</div></div>
-    <div class="admin-stat"><div class="admin-stat-label">Revenue Collected</div><div class="admin-stat-value" style="color:var(--green);">₹${totalRevenue.toLocaleString('en-IN')}</div></div>
-    <div class="admin-stat"><div class="admin-stat-label">Listing Fee</div><div class="admin-stat-value">${charges.listingFeePercent}%</div></div>
   `;
-
-  // Listings tab
-  const feeMultiplier = 1 + (charges.listingFeePercent / 100);
-  document.getElementById('adminListings').innerHTML = listings.length ? listings.map(l => `
+  document.getElementById('adminListings').innerHTML = listings.map(l=>`
     <div class="admin-card">
       <div style="font-size:1.5rem;">${CAT_ICON[l.category]||'📦'}</div>
       <div class="admin-card-info">
-        <div class="admin-card-title">${escHtml(l.title)}</div>
-        <div class="admin-card-sub">📍 ${escHtml(l.location)} · ₹${Math.round(l.price * feeMultiplier).toLocaleString('en-IN')} · ${l.condition} · by ${escHtml(l.seller)} · ${l.postedAt ? timeAgo(l.postedAt) : l.time}</div>
+        <div class="admin-card-title">${esc(l.title)}</div>
+        <div class="admin-card-sub">📍 ${esc(l.location)} · ₹${l.price.toLocaleString('en-IN')} · ${l.condition} · by ${esc(l.seller)} · ${timeAgo(l.postedAt)}</div>
       </div>
       <div class="admin-card-actions">
         <button class="small-btn small-btn-danger" onclick="adminDeleteListing(${l.id})">🗑 Delete</button>
       </div>
     </div>
-  `).join('') : '<p style="color:var(--muted);padding:1rem;">No listings found.</p>';
-
-  // Users tab
-  document.getElementById('adminUsers').innerHTML = users.length ? users.map(u => `
+  `).join('') || '<p style="color:var(--muted);padding:1rem;">Koi listing nahi.</p>';
+  document.getElementById('adminUsers').innerHTML = users.map(u=>`
     <div class="admin-card">
       <div class="seller-avatar" style="width:40px;height:40px;font-size:.9rem;">${(u.name||'U')[0].toUpperCase()}</div>
       <div class="admin-card-info">
-        <div class="admin-card-title">${escHtml(u.name||'Unknown')} ${u.isAdmin ? '<span class="admin-badge" style="font-size:.65rem;">ADMIN</span>' : ''}</div>
-        <div class="admin-card-sub">${escHtml(u.phone||'')} ${u.email ? '· '+escHtml(u.email) : ''} · Joined ${timeAgo(u.createdAt||Date.now())}</div>
+        <div class="admin-card-title">${esc(u.name||'Unknown')} ${u.isAdmin?'<span class="admin-badge" style="font-size:.65rem;">ADMIN</span>':''}</div>
+        <div class="admin-card-sub">${esc(u.email||'')} · Joined ${timeAgo(u.createdAt||Date.now())}</div>
       </div>
       <div class="admin-card-actions">
-        ${!u.isAdmin ? `<button class="small-btn small-btn-danger" onclick="adminDeleteUser('${u.uid}')">🗑 Delete</button>` : '<span style="color:var(--muted);font-size:.8rem;">Protected</span>'}
+        ${!u.isAdmin?`<button class="small-btn small-btn-danger" onclick="adminDeleteUser('${u.uid}')">🗑 Delete</button>`:'<span style="color:var(--muted);font-size:.8rem;">Protected</span>'}
       </div>
     </div>
-  `).join('') : '<p style="color:var(--muted);padding:1rem;">No registered users.</p>';
-
-  // Charges tab
-  document.getElementById('adminCharges').innerHTML = `
-    <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1.5rem;">
-      <h3 style="font-family:'Syne',sans-serif;margin-bottom:1.25rem;">💰 Fee & Charge Settings</h3>
-      <div class="admin-fee-row">
-        <div class="admin-fee-label">Listing Fee (%)</div>
-        <input class="admin-fee-input" type="number" id="feePct" value="${charges.listingFeePercent}" min="0" max="50" step="0.5">
-        <span style="color:var(--muted);font-size:.85rem;">% of listing price added to displayed price</span>
-      </div>
-      <div class="admin-fee-row">
-        <div class="admin-fee-label">Featured Boost (₹)</div>
-        <input class="admin-fee-input" type="number" id="feeBoost" value="${charges.featuredBoost}" min="0">
-        <span style="color:var(--muted);font-size:.85rem;">One-time boost per ad</span>
-      </div>
-      <div class="admin-fee-row">
-        <div class="admin-fee-label">Premium Plan (₹/mo)</div>
-        <input class="admin-fee-input" type="number" id="feePremium" value="${charges.premiumPlan}" min="0">
-        <span style="color:var(--muted);font-size:.85rem;">Monthly seller subscription</span>
-      </div>
-      <button class="submit-btn" style="max-width:200px;margin-top:.75rem;" onclick="saveAdminCharges()">💾 Save Charges</button>
-    </div>
-  `;
-
-  // Seller contacts tab
-  document.getElementById('adminContacts').innerHTML = `
-    <div style="margin-bottom:.75rem;color:var(--muted);font-size:.85rem;">All seller contact details from posted listings</div>
-    ${listings.map(l => `
+  `).join('') || '<p style="color:var(--muted);padding:1rem;">Koi user nahi.</p>';
+  document.getElementById('adminContacts').innerHTML = listings.map(l=>`
     <div class="admin-card">
       <div style="font-size:1.5rem;">${CAT_ICON[l.category]||'📦'}</div>
       <div class="admin-card-info">
-        <div class="admin-card-title">${escHtml(l.seller)} — ${escHtml(l.title)}</div>
-        <div class="admin-card-sub">📞 ${escHtml(l.phone||'Not provided')} · 📍 ${escHtml(l.location)}</div>
+        <div class="admin-card-title">${esc(l.seller)} — ${esc(l.title)}</div>
+        <div class="admin-card-sub">📞 ${esc(l.phone||'Not provided')} · 📍 ${esc(l.location)}</div>
       </div>
       <div class="admin-card-actions">
-        <button class="small-btn small-btn-primary" onclick="showToast('📞 ${escHtml(l.phone||'N/A')}')">Call</button>
-        <button class="small-btn small-btn-danger" onclick="adminUpdateContact(${l.id})">✏️ Edit</button>
+        ${l.phone&&l.phone!=='Not provided'?`<a href="tel:${esc(l.phone)}"><button class="small-btn small-btn-primary">📲 Call</button></a>`:''}
       </div>
-    </div>`).join('') || '<p style="color:var(--muted);padding:1rem;">No listings found.</p>'}
-  `;
+    </div>
+  `).join('') || '<p style="color:var(--muted);padding:1rem;">Koi listing nahi.</p>';
 }
-
 function switchAdminTab(tab, el) {
-  document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
-  if (el) el.classList.add('active');
-  document.querySelectorAll('.admin-section').forEach(s => s.classList.remove('active'));
-  document.getElementById('admin' + tab.charAt(0).toUpperCase() + tab.slice(1)).classList.add('active');
+  document.querySelectorAll('.admin-tab').forEach(t=>t.classList.remove('active'));
+  if(el) el.classList.add('active');
+  document.querySelectorAll('.admin-section').forEach(s=>s.classList.remove('active'));
+  document.getElementById('admin'+tab[0].toUpperCase()+tab.slice(1)).classList.add('active');
 }
-
 async function adminDeleteListing(id) {
-  if (!confirm('Delete this listing?')) return;
-  listings = listings.filter(l => l.id !== id);
-  await deleteListingFromSupabase(id);
-  renderAdminPanel();
-  showToast('🗑️ Listing deleted');
+  if (!confirm('Delete?')) return;
+  await sbDeleteListing(id);
+  listings=listings.filter(l=>l.id!==id);
+  renderAdminPanel(); renderListings(); showToast('🗑️ Deleted');
 }
 async function adminDeleteUser(uid) {
-  if (!confirm('Delete this user and all their listings?')) return;
-  await deleteUserById(uid);
-  renderAdminPanel();
-  showToast('🗑️ User deleted');
-}
-function saveAdminCharges() {
-  charges.listingFeePercent = parseFloat(document.getElementById('feePct').value) || 5;
-  charges.featuredBoost = parseInt(document.getElementById('feeBoost').value) || 99;
-  charges.premiumPlan = parseInt(document.getElementById('feePremium').value) || 299;
-  saveChargesToSupabase(charges);
-  showToast('✅ Charges update ho gaye!');
-  renderAdminPanel();
-  renderListings();
-}
-function adminUpdateContact(id) {
-  const l = listings.find(x => x.id === id);
-  if (!l) return;
-  const newPhone = prompt('Update phone for ' + l.seller + ':', l.phone || '');
-  if (newPhone === null) return;
-  l.phone = newPhone.trim();
-  saveListings(listings);
-  renderAdminPanel();
-  showToast('✅ Contact updated');
-}
-
-// ======= MISSING SUPABASE FUNCTIONS (aliases) =======
-async function saveListingToSupabase(listing) { return await sbSaveListing(listing); }
-async function deleteListingFromSupabase(id) { return await sbDeleteListing(id); }
-async function saveChargesToSupabase(c) { return await sbSaveCharges(c); }
-
-// ======= INIT =======
-renderNav();
-renderListings();
-showStorageInfo();
-// Load from Supabase in background
-setTimeout(() => refreshListingsFromSupabase(), 500);
-// Load users from Supabase
-setTimeout(async () => {
-  const sbUsers = await sbLoadUsers();
-  if (sbUsers) { users = sbUsers; }
-  const sbCharges = await sbLoadCharges();
-  if (sbCharges) { charges = sbCharges; renderListings(); }
-}, 600);
-
-async function uploadToCloudinary(file) {
-  const formData = new FormData();
-  formData.append("file", file);
-  formData.append("upload_preset", "my_upload");
-  const res = await fetch("https://api.cloudinary.com/v1_1/dada2emui/image/upload", {
-    method: "POST",
-    body: formData
-  });
-  const data = await res.json();
-  return data.secure_url;
+  if (!confirm('Delete this user?')) return;
+  try { await window._supabase.from('users').delete().eq('uid', uid); } catch(e){}
+  users=users.filter(u=>u.uid!==uid);
+  renderAdminPanel(); showToast('🗑️ User deleted');
 }
 </script>
-
-
 </body>
 </html>
