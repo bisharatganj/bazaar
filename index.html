@@ -1030,8 +1030,12 @@ async function handleEmailAuth() {
     let result;
     if (authMode === 'register') {
       result = await window._supabase.auth.signUp({
-        email, password, options: { data: { name: name || email } }
-      });
+  email,
+  password,
+  options: {
+    emailRedirectTo: window.location.origin + '/bazaar/'
+  }
+});
       if (result.error) throw result.error;
       showToast('✅ Account created! Please check your email to confirm.');
     } else {
