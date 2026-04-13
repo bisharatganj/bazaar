@@ -1,108 +1,12 @@
 <!DOCTYPE html>
-<html lang="en"> 
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>BazaarNow — Buy & Sell Anything</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
-  <!-- ✅ FULLY FIXED FINAL CODE (COPY-PASTE THIS ENTIRE SCRIPT SECTION IN YOUR FILE) -->
-
-<script>
-
-// ======= STATE =======
-let currentUser = null;
-let listings = [];
-let users = [];
-let uploadedFiles = [];
-let activeCategory = 'All';
-let activeCondition = 'All';
-let currentSort = 'newest';
-
-// ======= AUTH =======
-window.onAuthChanged = function(sbUser) {
-  if (sbUser) {
-    const email = sbUser.email || '';
-    const meta = sbUser.user_metadata || {};
-    const name = meta.name || meta.full_name || email.split('@')[0];
-    const isAdmin = email === ADMIN_EMAIL;
-    currentUser = { uid: sbUser.id, name, email, isAdmin };
-    sbUpsertUser(sbUser.id, { name, email, isAdmin });
-  } else {
-    currentUser = null;
-  }
-
-  renderNav();
-  renderListings();
-};
-
-// ======= INIT =======
-async function init() {
-  const { data: { session } } = await window._supabase.auth.getSession();
-
-  if (session?.user) {
-    window.onAuthChanged(session.user);
-  } else {
-    renderNav();
-  }
-
-  window._supabase.auth.onAuthStateChange((event, session) => {
-    if (session?.user) {
-      window.onAuthChanged(session.user);
-    }
-  });
-
-  const sbListings = await sbLoadListings();
-  if (sbListings && sbListings.length > 0) {
-    listings = sbListings;
-  } else {
-    listings = DEFAULT_LISTINGS.map(l => ({...l, imgs:[DEMO_PH[l.category]||DEMO_PH.Other]}));
-  }
-
-  users = await sbLoadUsers() || [];
-  renderListings();
-}
-init();
-
-// ======= NAV =======
-function renderNav() {
-  const nav = document.getElementById('navRight');
-
-  if (currentUser) {
-    const init = (currentUser.name||'U')[0].toUpperCase();
-    nav.innerHTML = `
-      <div style="position:relative;" id="userMenuWrap">
-        <button class="user-avatar-btn" onclick="toggleUserMenu()">${init}</button>
-        <div class="user-dropdown" id="userDropdown">
-          <div class="user-dropdown-info">
-            <div class="user-dropdown-name">${esc(currentUser.name)}</div>
-            <div class="user-dropdown-email">${esc(currentUser.email)}</div>
-          </div>
-          <div class="user-dropdown-item" onclick="closeDropdown();showMainView()">🏠 Marketplace</div>
-          <div class="user-dropdown-item" style="color:var(--accent2);" onclick="handleLogout()">🚪 Logout</div>
-        </div>
-      </div>
-      <button class="btn btn-primary" onclick="handleSellClick()">+ Sell</button>
-    `;
-  } else {
-    nav.innerHTML = `
-      <button class="btn btn-ghost" onclick="openAuthModal()">Login</button>
-      <button class="btn btn-primary" onclick="openAuthModal()">Register / Sell Now +</button>
-    `;
-  }
-
-  // ✅ FIXED FAB
-  const fab = document.ge
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script>
-  const SUPABASE_URL = 'https://kytailsminhycuhdfirf.supabase.co'; 
-  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt5dGFpbHNtaW5oeWN1aGRmaXJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwNjA0MzAsImV4cCI6MjA5MTYzNjQzMH0.tAE0T3BAcr3keR10pJ8f8bib8VcAwzbJvzJGGi7mujA';
-  const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-  window._supabase = _supabase;
-  _supabase.auth.onAuthStateChange((event, session) => {
-    window._supabaseSession = session;
-    if (typeof window.onAuthChanged === 'function') window.onAuthChanged(session?.user || null);
-  });
-</script>
+
 <style>
   :root {
     --bg: #0f0e0c;
@@ -117,26 +21,35 @@ function renderNav() {
     --card-bg: #1e1d1b;
     --blue: #3b82f6;
     --purple: #8b5cf6;
+    --radius: 12px;
   }
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   html { scroll-behavior: smooth; }
   body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; overflow-x: hidden; }
 
-  /* NAV */
+  /* ===== NAV ===== */
   nav {
     position: sticky; top: 0; z-index: 100;
-    background: rgba(15,14,12,0.92); backdrop-filter: blur(16px);
+    background: rgba(15,14,12,0.94); backdrop-filter: blur(20px);
     border-bottom: 1px solid var(--border);
-    padding: 0 2rem; display: flex; align-items: center; gap: 1.5rem; height: 64px;
+    padding: 0 2rem; display: flex; align-items: center; gap: 1.25rem; height: 64px;
   }
-  .logo { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.5rem; color: var(--accent); letter-spacing: -0.5px; white-space: nowrap; }
+  .logo { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.5rem; color: var(--accent); letter-spacing: -0.5px; white-space: nowrap; cursor: pointer; }
   .logo span { color: var(--accent2); }
-  .search-bar { flex: 1; max-width: 500px; display: flex; align-items: center; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; transition: border-color .2s; }
+
+  .search-wrap { flex: 1; max-width: 520px; position: relative; }
+  .search-bar { display: flex; align-items: center; background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; transition: border-color .2s; }
   .search-bar:focus-within { border-color: var(--accent); }
-  .search-bar input { flex: 1; background: none; border: none; outline: none; color: var(--text); font-family: 'DM Sans', sans-serif; font-size: .95rem; padding: .6rem 1rem; }
+  .search-bar input { flex: 1; background: none; border: none; outline: none; color: var(--text); font-family: 'DM Sans', sans-serif; font-size: .95rem; padding: .65rem 1rem; }
   .search-bar input::placeholder { color: var(--muted); }
-  .search-bar button { background: var(--accent); border: none; cursor: pointer; padding: .6rem 1rem; color: #000; font-weight: 600; font-size: .9rem; transition: background .2s; }
+  .search-bar button { background: var(--accent); border: none; cursor: pointer; padding: .65rem 1.1rem; color: #000; font-weight: 700; font-size: .9rem; transition: background .2s; white-space: nowrap; }
   .search-bar button:hover { background: #f7b84a; }
+  .search-suggestions { position: absolute; top: calc(100% + 6px); left: 0; right: 0; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; z-index: 200; box-shadow: 0 8px 32px rgba(0,0,0,0.4); display: none; }
+  .search-suggestions.open { display: block; }
+  .suggestion-item { padding: .65rem 1rem; cursor: pointer; font-size: .9rem; transition: background .15s; display: flex; align-items: center; gap: .6rem; }
+  .suggestion-item:hover { background: var(--surface2); }
+  .suggestion-item .sug-cat { font-size: .75rem; color: var(--muted); margin-left: auto; }
+
   .nav-right { display: flex; align-items: center; gap: .75rem; margin-left: auto; }
   .btn { cursor: pointer; border: none; border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: .9rem; font-weight: 500; padding: .5rem 1.1rem; transition: all .2s; }
   .btn-ghost { background: transparent; border: 1px solid var(--border); color: var(--text); }
@@ -144,20 +57,18 @@ function renderNav() {
   .btn-primary { background: var(--accent); color: #000; font-weight: 700; }
   .btn-primary:hover { background: #f7b84a; transform: translateY(-1px); }
 
-  /* USER AVATAR */
+  /* ===== USER AVATAR / DROPDOWN ===== */
   .user-avatar-btn {
     width: 36px; height: 36px; border-radius: 50%;
     background: linear-gradient(135deg, var(--accent), var(--accent2));
     border: none; cursor: pointer; display: flex; align-items: center; justify-content: center;
     font-family: 'Syne', sans-serif; font-weight: 800; font-size: .9rem; color: #000;
-    position: relative;
   }
   .user-dropdown {
     position: absolute; top: calc(100% + .5rem); right: 0;
-    background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
-    min-width: 220px; overflow: hidden; z-index: 200;
-    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
-    display: none;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
+    min-width: 230px; overflow: hidden; z-index: 200;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5); display: none;
   }
   .user-dropdown.open { display: block; }
   .user-dropdown-item {
@@ -167,11 +78,11 @@ function renderNav() {
   }
   .user-dropdown-item:last-child { border-bottom: none; }
   .user-dropdown-item:hover { background: var(--surface2); }
-  .user-dropdown-info { padding: .85rem 1rem; border-bottom: 1px solid var(--border); }
+  .user-dropdown-info { padding: .9rem 1rem; border-bottom: 1px solid var(--border); }
   .user-dropdown-name { font-weight: 600; font-size: .95rem; }
-  .user-dropdown-email { font-size: .78rem; color: var(--muted); }
+  .user-dropdown-email { font-size: .78rem; color: var(--muted); margin-top: .1rem; }
 
-  /* HERO */
+  /* ===== HERO ===== */
   .hero { padding: 3.5rem 2rem 2.5rem; text-align: center; position: relative; overflow: hidden; }
   .hero::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse 80% 60% at 50% -10%, rgba(245,166,35,0.12), transparent); pointer-events: none; }
   .hero h1 { font-family: 'Syne', sans-serif; font-size: clamp(2.2rem, 5vw, 3.8rem); font-weight: 800; line-height: 1.1; letter-spacing: -1px; margin-bottom: .75rem; }
@@ -181,45 +92,69 @@ function renderNav() {
   .cat-pill { background: var(--surface2); border: 1px solid var(--border); border-radius: 50px; padding: .4rem .9rem; font-size: .85rem; cursor: pointer; transition: all .2s; color: var(--muted); }
   .cat-pill:hover, .cat-pill.active { background: var(--accent); color: #000; border-color: var(--accent); font-weight: 600; }
 
-  /* FAB */
-  .sell-fab { position: fixed; bottom: 2rem; right: 2rem; z-index: 200; background: var(--accent2); color: #fff; border: none; border-radius: 50px; padding: .85rem 1.6rem; font-family: 'Syne', sans-serif; font-weight: 700; font-size: 1rem; cursor: pointer; box-shadow: 0 8px 32px rgba(232,71,29,0.4); display: flex; align-items: center; gap: .5rem; transition: all .25s; }
-  .sell-fab:hover { transform: translateY(-3px); box-shadow: 0 12px 40px rgba(232,71,29,0.5); }
+  /* ===== STATS BAR ===== */
+  .stats-bar { background: var(--surface); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); padding: .75rem 2rem; display: flex; justify-content: center; gap: 3rem; margin-bottom: .5rem; }
+  .stat-item { text-align: center; }
+  .stat-num { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.3rem; color: var(--accent); }
+  .stat-label { font-size: .75rem; color: var(--muted); }
 
-  /* GRID */
-  main { max-width: 1280px; margin: 0 auto; padding: 0 2rem 4rem; }
+  /* ===== FAB ===== */
+  .sell-fab { position: fixed; bottom: 2rem; right: 2rem; z-index: 200; background: var(--accent2); color: #fff; border: none; border-radius: 50px; padding: .85rem 1.6rem; font-family: 'Syne', sans-serif; font-weight: 700; font-size: 1rem; cursor: pointer; box-shadow: 0 8px 32px rgba(232,71,29,0.4); display: none; align-items: center; gap: .5rem; transition: all .25s; }
+  .sell-fab:hover { transform: translateY(-3px); box-shadow: 0 12px 40px rgba(232,71,29,0.55); }
+
+  /* ===== GRID ===== */
+  main { max-width: 1280px; margin: 0 auto; padding: 0 2rem 5rem; }
   .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem; }
   .section-title { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 1.3rem; }
   .see-all { color: var(--accent); font-size: .9rem; cursor: pointer; background: none; border: none; }
-  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 1rem; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 1rem; }
 
-  .card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; cursor: pointer; transition: all .25s; position: relative; }
+  /* ===== CARD ===== */
+  .card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; cursor: pointer; transition: all .25s; position: relative; animation: fadeIn .4s ease both; }
   .card:hover { border-color: var(--accent); transform: translateY(-4px); box-shadow: 0 12px 36px rgba(0,0,0,0.4); }
   .card-img-wrapper { position: relative; overflow: hidden; }
   .card-img-wrapper img { width: 100%; aspect-ratio: 4/3; object-fit: cover; display: block; transition: transform .4s; }
-  .card:hover .card-img-wrapper img { transform: scale(1.05); }
-  .card-badge { position: absolute; top: .6rem; left: .6rem; background: var(--accent2); color: #fff; font-size: .7rem; font-weight: 700; padding: .2rem .55rem; border-radius: 4px; text-transform: uppercase; letter-spacing: .5px; }
+  .card:hover .card-img-wrapper img { transform: scale(1.06); }
+  .card-badge { position: absolute; top: .6rem; left: .6rem; background: rgba(0,0,0,0.65); color: #fff; font-size: .68rem; font-weight: 700; padding: .2rem .55rem; border-radius: 4px; text-transform: uppercase; letter-spacing: .5px; border: 1px solid rgba(255,255,255,0.1); }
+  .card-badge.badge-new { background: var(--green); color: #000; border-color: transparent; }
+  .card-badge.badge-like { background: var(--blue); border-color: transparent; }
+  .card-badge.badge-good { background: var(--accent); color: #000; border-color: transparent; }
+  .card-badge.badge-fair { background: var(--accent2); border-color: transparent; }
   .card-fav { position: absolute; top: .5rem; right: .5rem; background: rgba(0,0,0,0.55); border: none; border-radius: 50%; width: 32px; height: 32px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all .2s; color: #fff; font-size: 1rem; }
-  .card-fav:hover { background: rgba(245,166,35,0.8); }
-  .card-fav.active { background: var(--accent2); }
-  .card-body { padding: .75rem; }
-  .card-price { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.2rem; color: var(--accent); margin-bottom: .2rem; }
-  .card-title { font-size: .9rem; font-weight: 500; margin-bottom: .3rem; line-height: 1.3; }
-  .card-meta { font-size: .78rem; color: var(--muted); display: flex; gap: .5rem; align-items: center; }
-  .card-meta .dot { width: 3px; height: 3px; border-radius: 50%; background: var(--border); }
+  .card-fav:hover, .card-fav.active { background: var(--accent2); }
+  .card-own-badge { position: absolute; bottom: .5rem; left: .5rem; background: var(--green); color: #000; font-size: .65rem; font-weight: 700; padding: .15rem .45rem; border-radius: 4px; }
+  .card-neg-badge { position: absolute; bottom: .5rem; right: .5rem; background: rgba(46,207,122,0.15); border: 1px solid rgba(46,207,122,0.4); color: var(--green); font-size: .65rem; font-weight: 700; padding: .15rem .45rem; border-radius: 4px; }
+  .card-body { padding: .8rem; }
+  .card-price { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.2rem; color: var(--accent); margin-bottom: .15rem; display: flex; align-items: center; gap: .4rem; }
+  .card-price .neg-tag { font-size: .65rem; background: rgba(46,207,122,0.15); color: var(--green); border: 1px solid rgba(46,207,122,0.3); border-radius: 3px; padding: .1rem .3rem; font-weight: 700; }
+  .card-title { font-size: .9rem; font-weight: 500; margin-bottom: .35rem; line-height: 1.35; }
+  .card-meta { font-size: .78rem; color: var(--muted); display: flex; gap: .5rem; align-items: center; flex-wrap: wrap; }
+  .card-meta .dot { width: 3px; height: 3px; border-radius: 50%; background: var(--border); flex-shrink: 0; }
+  .card-views { display: flex; align-items: center; gap: .25rem; margin-left: auto; }
 
-  /* MODAL */
-  .overlay { position: fixed; inset: 0; z-index: 300; background: rgba(0,0,0,0.75); backdrop-filter: blur(6px); display: flex; align-items: center; justify-content: center; padding: 1rem; opacity: 0; pointer-events: none; transition: opacity .25s; }
+  /* ===== SKELETON ===== */
+  .skeleton { background: linear-gradient(90deg, var(--surface2) 25%, var(--border) 50%, var(--surface2) 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; border-radius: 8px; }
+  @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+  .skeleton-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; }
+  .skeleton-img { width: 100%; aspect-ratio: 4/3; }
+  .skeleton-body { padding: .8rem; display: flex; flex-direction: column; gap: .5rem; }
+  .skeleton-line { height: 14px; border-radius: 4px; }
+
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+
+  /* ===== MODAL ===== */
+  .overlay { position: fixed; inset: 0; z-index: 300; background: rgba(0,0,0,0.78); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; padding: 1rem; opacity: 0; pointer-events: none; transition: opacity .25s; }
   .overlay.open { opacity: 1; pointer-events: all; }
-  .modal { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; width: 100%; max-width: 560px; max-height: 90vh; overflow-y: auto; padding: 2rem; transform: translateY(20px); transition: transform .3s; }
+  .modal { background: var(--surface); border: 1px solid var(--border); border-radius: 18px; width: 100%; max-width: 580px; max-height: 90vh; overflow-y: auto; padding: 2rem; transform: translateY(20px); transition: transform .3s; }
   .overlay.open .modal { transform: translateY(0); }
   .modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; }
   .modal-title { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.4rem; }
-  .close-btn { background: var(--surface2); border: 1px solid var(--border); color: var(--text); border-radius: 8px; width: 36px; height: 36px; cursor: pointer; font-size: 1.1rem; display: flex; align-items: center; justify-content: center; transition: all .2s; }
+  .close-btn { background: var(--surface2); border: 1px solid var(--border); color: var(--text); border-radius: 8px; width: 36px; height: 36px; cursor: pointer; font-size: 1.1rem; display: flex; align-items: center; justify-content: center; transition: all .2s; flex-shrink: 0; }
   .close-btn:hover { border-color: var(--accent2); color: var(--accent2); }
 
-  /* FORM */
+  /* ===== FORM ===== */
   .form-group { margin-bottom: 1.1rem; }
-  .form-label { display: block; font-size: .85rem; font-weight: 600; margin-bottom: .4rem; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; }
+  .form-label { display: block; font-size: .82rem; font-weight: 600; margin-bottom: .4rem; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; }
   .form-input, .form-select, .form-textarea { width: 100%; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-family: 'DM Sans', sans-serif; font-size: .95rem; padding: .65rem .9rem; outline: none; transition: border-color .2s; }
   .form-input:focus, .form-select:focus, .form-textarea:focus { border-color: var(--accent); }
   .form-select { appearance: none; cursor: pointer; }
@@ -227,12 +162,15 @@ function renderNav() {
   .form-textarea { resize: vertical; min-height: 90px; }
   .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; }
 
-  /* OTP INPUTS */
+  /* ===== OTP ===== */
   .otp-inputs { display: flex; gap: .5rem; justify-content: center; margin: 1rem 0; }
   .otp-input { width: 48px; height: 56px; background: var(--surface2); border: 2px solid var(--border); border-radius: 10px; color: var(--text); font-size: 1.4rem; font-family: 'Syne', sans-serif; font-weight: 700; text-align: center; outline: none; transition: border-color .2s; }
   .otp-input:focus { border-color: var(--accent); }
+  .email-hint { font-size: .82rem; color: var(--muted); margin-top: .4rem; line-height: 1.5; }
+  .otp-sent-info { background: rgba(46,207,122,0.1); border: 1px solid rgba(46,207,122,0.3); border-radius: 10px; padding: .85rem 1rem; margin-bottom: 1.25rem; font-size: .9rem; }
+  .otp-sent-info strong { color: var(--green); }
 
-  /* UPLOAD */
+  /* ===== UPLOAD ===== */
   .upload-zone { border: 2px dashed var(--border); border-radius: 12px; padding: 2rem; text-align: center; cursor: pointer; transition: all .2s; position: relative; }
   .upload-zone:hover, .upload-zone.drag { border-color: var(--accent); background: rgba(245,166,35,0.05); }
   .upload-zone input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
@@ -243,59 +181,100 @@ function renderNav() {
   .preview-item { width: 80px; height: 80px; border-radius: 8px; border: 1px solid var(--border); overflow: hidden; position: relative; }
   .preview-item img { width: 100%; height: 100%; object-fit: cover; }
   .preview-item button { position: absolute; top: 2px; right: 2px; background: rgba(0,0,0,0.7); border: none; border-radius: 50%; width: 20px; height: 20px; color: #fff; cursor: pointer; font-size: .7rem; display: flex; align-items: center; justify-content: center; }
+
+  /* ===== TOGGLE ===== */
+  .toggle-row { display: flex; align-items: center; justify-content: space-between; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: .65rem .9rem; }
+  .toggle-label { font-size: .9rem; font-weight: 500; }
+  .toggle-sub { font-size: .75rem; color: var(--muted); }
+  .toggle-switch { position: relative; width: 44px; height: 24px; flex-shrink: 0; }
+  .toggle-switch input { opacity: 0; width: 0; height: 0; }
+  .toggle-track { position: absolute; inset: 0; background: var(--border); border-radius: 50px; cursor: pointer; transition: background .25s; }
+  .toggle-switch input:checked + .toggle-track { background: var(--accent); }
+  .toggle-thumb { position: absolute; top: 2px; left: 2px; width: 20px; height: 20px; background: #fff; border-radius: 50%; transition: transform .25s; pointer-events: none; }
+  .toggle-switch input:checked ~ .toggle-thumb { transform: translateX(20px); }
+
+  /* ===== SUBMIT BTN ===== */
   .submit-btn { width: 100%; padding: .9rem; background: var(--accent); color: #000; border: none; border-radius: 10px; font-family: 'Syne', sans-serif; font-weight: 700; font-size: 1rem; cursor: pointer; transition: all .25s; margin-top: .5rem; }
   .submit-btn:hover { background: #f7b84a; transform: translateY(-1px); }
   .submit-btn:disabled { opacity: .5; cursor: not-allowed; transform: none; }
 
-  /* AUTH STEPS */
-  .auth-step { }
-  .email-hint { font-size: .82rem; color: var(--muted); margin-top: .4rem; line-height: 1.5; }
-  .otp-sent-info { background: rgba(46,207,122,0.1); border: 1px solid rgba(46,207,122,0.3); border-radius: 10px; padding: .85rem 1rem; margin-bottom: 1.25rem; font-size: .9rem; }
-  .otp-sent-info strong { color: var(--green); }
-
-  /* DETAIL MODAL */
-  .detail-imgs { display: flex; flex-direction: column; gap: .5rem; margin-bottom: 1.25rem; }
-  .detail-main-img { width: 100%; border-radius: 10px; aspect-ratio: 16/9; object-fit: cover; background: var(--surface2); }
-  .detail-thumbs { display: flex; gap: .5rem; }
-  .detail-thumb { width: 60px; height: 60px; border-radius: 6px; object-fit: cover; border: 2px solid transparent; cursor: pointer; transition: border-color .2s; }
-  .detail-thumb.active { border-color: var(--accent); }
-  .detail-price { font-family: 'Syne', sans-serif; font-size: 2rem; font-weight: 800; color: var(--accent); }
-  .detail-title { font-size: 1.2rem; font-weight: 600; margin: .4rem 0; }
-  .detail-desc { color: var(--muted); font-size: .9rem; line-height: 1.6; margin-bottom: 1rem; }
-  .detail-meta { display: flex; flex-wrap: wrap; gap: .5rem; margin-bottom: 1rem; }
-  .detail-tag { background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; padding: .3rem .7rem; font-size: .8rem; color: var(--muted); }
-  .detail-seller { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: .85rem; display: flex; align-items: center; gap: .75rem; margin-bottom: 1rem; }
-  .seller-avatar { width: 44px; height: 44px; border-radius: 50%; background: linear-gradient(135deg, var(--accent), var(--accent2)); display: flex; align-items: center; justify-content: center; font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1rem; color: #000; flex-shrink: 0; }
-  .seller-name { font-weight: 600; font-size: .95rem; }
-  .seller-sub { color: var(--muted); font-size: .8rem; }
-  .contact-btn { width: 100%; padding: .85rem; background: var(--green); color: #000; border: none; border-radius: 10px; font-family: 'Syne', sans-serif; font-weight: 700; font-size: 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: .5rem; transition: all .25s; margin-bottom: .5rem; }
-  .contact-btn:hover { filter: brightness(1.1); transform: translateY(-1px); }
-  .contact-reveal { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 1rem; display: flex; align-items: center; gap: .75rem; margin-bottom: .5rem; }
-  .contact-reveal .contact-phone { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 1.1rem; color: var(--green); }
-  .login-gate { background: linear-gradient(135deg, rgba(245,166,35,0.08), rgba(232,71,29,0.06)); border: 1px solid rgba(245,166,35,0.2); border-radius: 10px; padding: 1rem; text-align: center; margin-bottom: .75rem; }
-  .login-gate p { color: var(--muted); font-size: .88rem; margin-bottom: .75rem; }
-  .login-gate strong { color: var(--accent); }
-
-  /* TOAST */
-  .toast { position: fixed; bottom: 5rem; left: 50%; transform: translateX(-50%) translateY(20px); background: var(--green); color: #000; border-radius: 50px; padding: .7rem 1.5rem; font-weight: 700; font-size: .9rem; z-index: 500; opacity: 0; transition: all .3s; pointer-events: none; white-space: nowrap; }
-  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
-  .toast.error { background: var(--accent2); color: #fff; }
-
-  /* EMPTY */
-  .empty { text-align: center; padding: 4rem 1rem; color: var(--muted); grid-column: 1/-1; }
-
-  /* FILTERS */
+  /* ===== FILTERS ===== */
   .filters-row { display: flex; gap: .5rem; flex-wrap: wrap; margin-bottom: 1.5rem; align-items: center; }
   .filter-chip { background: var(--surface2); border: 1px solid var(--border); border-radius: 50px; padding: .35rem .8rem; font-size: .82rem; cursor: pointer; transition: all .2s; color: var(--muted); white-space: nowrap; }
   .filter-chip:hover, .filter-chip.active { background: var(--accent); color: #000; border-color: var(--accent); font-weight: 600; }
   .sort-select { margin-left: auto; background: var(--surface2); border: 1px solid var(--border); color: var(--text); border-radius: 8px; padding: .35rem .7rem; font-family: 'DM Sans', sans-serif; font-size: .85rem; cursor: pointer; outline: none; }
 
-  /* SPINNER */
+  /* ===== DETAIL MODAL ===== */
+  .detail-img-gallery { position: relative; margin-bottom: 1.25rem; }
+  .detail-main-img { width: 100%; border-radius: 12px; aspect-ratio: 16/9; object-fit: cover; background: var(--surface2); cursor: zoom-in; transition: opacity .2s; }
+  .detail-thumbs { display: flex; gap: .5rem; margin-top: .5rem; flex-wrap: wrap; }
+  .detail-thumb { width: 58px; height: 58px; border-radius: 8px; object-fit: cover; border: 2px solid transparent; cursor: pointer; transition: border-color .2s; opacity: .7; }
+  .detail-thumb.active { border-color: var(--accent); opacity: 1; }
+  .detail-thumb:hover { opacity: 1; }
+  .detail-price { font-family: 'Syne', sans-serif; font-size: 2rem; font-weight: 800; color: var(--accent); display: flex; align-items: center; gap: .75rem; }
+  .detail-price .neg-badge { font-size: .75rem; background: rgba(46,207,122,0.15); color: var(--green); border: 1px solid rgba(46,207,122,0.3); border-radius: 6px; padding: .25rem .6rem; font-weight: 700; }
+  .detail-title { font-size: 1.2rem; font-weight: 600; margin: .5rem 0; }
+  .detail-desc { color: var(--muted); font-size: .9rem; line-height: 1.7; margin-bottom: 1rem; white-space: pre-wrap; }
+  .detail-meta { display: flex; flex-wrap: wrap; gap: .5rem; margin-bottom: 1rem; }
+  .detail-tag { background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; padding: .3rem .7rem; font-size: .8rem; color: var(--muted); }
+  .detail-seller { background: var(--surface2); border: 1px solid var(--border); border-radius: 12px; padding: .9rem; display: flex; align-items: center; gap: .75rem; margin-bottom: 1rem; }
+  .seller-avatar { width: 44px; height: 44px; border-radius: 50%; background: linear-gradient(135deg, var(--accent), var(--accent2)); display: flex; align-items: center; justify-content: center; font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1rem; color: #000; flex-shrink: 0; }
+  .seller-name { font-weight: 600; font-size: .95rem; }
+  .seller-sub { color: var(--muted); font-size: .8rem; }
+  .contact-btn { width: 100%; padding: .85rem; background: var(--green); color: #000; border: none; border-radius: 10px; font-family: 'Syne', sans-serif; font-weight: 700; font-size: 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: .5rem; transition: all .25s; margin-bottom: .5rem; }
+  .contact-btn:hover { filter: brightness(1.1); transform: translateY(-1px); }
+  .contact-reveal { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 1rem; display: flex; align-items: center; gap: .75rem; margin-bottom: .75rem; }
+  .contact-phone { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 1.1rem; color: var(--green); }
+  .login-gate { background: linear-gradient(135deg, rgba(245,166,35,0.08), rgba(232,71,29,0.06)); border: 1px solid rgba(245,166,35,0.2); border-radius: 12px; padding: 1.1rem; text-align: center; margin-bottom: .75rem; }
+  .login-gate p { color: var(--muted); font-size: .88rem; margin-bottom: .75rem; }
+  .login-gate strong { color: var(--accent); }
+
+  /* Share & action buttons */
+  .action-row { display: flex; gap: .5rem; margin-bottom: .75rem; }
+  .action-btn { flex: 1; padding: .65rem; background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; color: var(--text); font-family: 'DM Sans', sans-serif; font-size: .85rem; font-weight: 500; cursor: pointer; transition: all .2s; display: flex; align-items: center; justify-content: center; gap: .4rem; }
+  .action-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* Related */
+  .related-section { margin-top: 1.25rem; border-top: 1px solid var(--border); padding-top: 1rem; }
+  .related-title { font-family: 'Syne', sans-serif; font-size: 1rem; font-weight: 700; margin-bottom: .75rem; }
+  .related-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: .5rem; }
+  .related-card { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; cursor: pointer; transition: all .2s; }
+  .related-card:hover { border-color: var(--accent); transform: translateY(-2px); }
+  .related-card img { width: 100%; aspect-ratio: 4/3; object-fit: cover; display: block; }
+  .related-card-body { padding: .4rem .5rem; }
+  .related-card-price { font-family: 'Syne', sans-serif; font-size: .85rem; font-weight: 800; color: var(--accent); }
+  .related-card-title { font-size: .75rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  /* ===== MY LISTINGS ===== */
+  .my-listings-section { margin-top: 1.25rem; border-top: 1px solid var(--border); padding-top: 1rem; }
+  .my-listing-item { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: .75rem; display: flex; gap: .75rem; align-items: center; margin-bottom: .5rem; cursor: pointer; transition: all .2s; }
+  .my-listing-item:hover { border-color: var(--accent); }
+  .my-listing-img { width: 56px; height: 56px; border-radius: 8px; object-fit: cover; flex-shrink: 0; }
+  .my-listing-info { flex: 1; min-width: 0; }
+  .my-listing-title { font-size: .88rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .my-listing-sub { font-size: .75rem; color: var(--muted); margin-top: .2rem; }
+
+  /* ===== IMAGE ZOOM OVERLAY ===== */
+  #zoomOverlay { position: fixed; inset: 0; z-index: 500; background: rgba(0,0,0,0.92); display: none; align-items: center; justify-content: center; cursor: zoom-out; }
+  #zoomOverlay.open { display: flex; }
+  #zoomOverlay img { max-width: 92vw; max-height: 90vh; object-fit: contain; border-radius: 10px; }
+
+  /* ===== TOAST ===== */
+  .toast { position: fixed; bottom: 5rem; left: 50%; transform: translateX(-50%) translateY(20px); background: var(--green); color: #000; border-radius: 50px; padding: .7rem 1.5rem; font-weight: 700; font-size: .9rem; z-index: 600; opacity: 0; transition: all .3s; pointer-events: none; white-space: nowrap; }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  .toast.error { background: var(--accent2); color: #fff; }
+
+  /* ===== EMPTY ===== */
+  .empty { text-align: center; padding: 4rem 1rem; color: var(--muted); grid-column: 1/-1; }
+  .empty-icon { font-size: 3rem; margin-bottom: .75rem; opacity: .5; }
+  .empty-sub { font-size: .9rem; margin-top: .5rem; }
+
+  /* ===== SPINNER ===== */
   .spinner { display: inline-block; width: 18px; height: 18px; border: 2px solid rgba(0,0,0,0.3); border-top-color: #000; border-radius: 50%; animation: spin .7s linear infinite; vertical-align: middle; margin-right: .4rem; }
   .spinner-light { border-color: rgba(255,255,255,0.3); border-top-color: #fff; }
   @keyframes spin { to { transform: rotate(360deg); } }
 
-  /* ADMIN */
+  /* ===== ADMIN ===== */
   .admin-page { max-width: 1100px; margin: 0 auto; padding: 2rem; }
   .admin-header { display: flex; align-items: center; gap: 1rem; margin-bottom: 2rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border); }
   .admin-header h1 { font-family: 'Syne', sans-serif; font-size: 1.8rem; font-weight: 800; }
@@ -310,24 +289,33 @@ function renderNav() {
   .admin-card-title { font-weight: 600; font-size: .95rem; margin-bottom: .2rem; }
   .admin-card-sub { font-size: .8rem; color: var(--muted); }
   .admin-card-actions { display: flex; gap: .5rem; flex-shrink: 0; }
-  .admin-stat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+  .admin-stat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
   .admin-stat { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.25rem; }
   .admin-stat-label { font-size: .8rem; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; margin-bottom: .4rem; }
   .admin-stat-value { font-family: 'Syne', sans-serif; font-size: 2rem; font-weight: 800; color: var(--accent); }
   .small-btn { padding: .35rem .75rem; font-size: .82rem; font-weight: 600; border: none; border-radius: 6px; cursor: pointer; transition: all .2s; }
   .small-btn-danger { background: rgba(232,71,29,0.15); color: var(--accent2); border: 1px solid rgba(232,71,29,0.3); }
   .small-btn-danger:hover { background: var(--accent2); color: #fff; }
-  .small-btn-primary { background: var(--accent); color: #000; }
+  .small-btn-primary { background: var(--accent); color: #000; border: none; }
   .small-btn-primary:hover { filter: brightness(1.1); }
 
+  /* ===== MY PROFILE MODAL ===== */
+  .profile-stat { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: .75rem 1rem; text-align: center; }
+  .profile-stat-num { font-family: 'Syne', sans-serif; font-size: 1.5rem; font-weight: 800; color: var(--accent); }
+  .profile-stat-label { font-size: .75rem; color: var(--muted); margin-top: .15rem; }
+
+  /* ===== RESPONSIVE ===== */
   @media (max-width: 600px) {
-    nav { padding: 0 1rem; gap: .75rem; }
+    nav { padding: 0 1rem; gap: .6rem; }
     .logo { font-size: 1.2rem; }
+    .search-bar button { padding: .65rem .7rem; font-size: .8rem; }
     main { padding: 0 1rem 5rem; }
     .hero { padding: 2rem 1rem 1.5rem; }
+    .stats-bar { gap: 1.5rem; }
     .modal { padding: 1.25rem; }
     .form-row { grid-template-columns: 1fr; }
     .admin-page { padding: 1rem; }
+    .detail-price { font-size: 1.5rem; }
   }
 </style>
 </head>
@@ -335,10 +323,13 @@ function renderNav() {
 
 <!-- NAV -->
 <nav id="mainNav">
-  <div class="logo">Bazaar<span>Now</span></div>
-  <div class="search-bar">
-    <input type="text" id="searchInput" placeholder="Search mobiles, cycles, clothes…" oninput="renderListings()">
-    <button onclick="renderListings()">Search</button>
+  <div class="logo" onclick="showMainView()">Bazaar<span>Now</span></div>
+  <div class="search-wrap">
+    <div class="search-bar">
+      <input type="text" id="searchInput" placeholder="Search mobiles, cycles, clothes…" oninput="onSearchInput()" autocomplete="off">
+      <button onclick="renderListings()">Search</button>
+    </div>
+    <div class="search-suggestions" id="searchSuggestions"></div>
   </div>
   <div class="nav-right" id="navRight"></div>
 </nav>
@@ -347,7 +338,7 @@ function renderNav() {
 <div id="mainView">
   <section class="hero">
     <h1>Buy & Sell <em>Anything</em><br>Near You</h1>
-    <p>List your old mobile, cycle, clothes & more — for free</p>
+    <p>List your old mobile, cycle, clothes & more — completely free</p>
     <div class="hero-cats" id="heroCats">
       <div class="cat-pill active" onclick="filterCat('All',this)">All</div>
       <div class="cat-pill" onclick="filterCat('Mobiles',this)">📱 Mobiles</div>
@@ -360,6 +351,13 @@ function renderNav() {
       <div class="cat-pill" onclick="filterCat('Other',this)">📦 Other</div>
     </div>
   </section>
+
+  <div class="stats-bar" id="statsBar">
+    <div class="stat-item"><div class="stat-num" id="statListings">0</div><div class="stat-label">Active Listings</div></div>
+    <div class="stat-item"><div class="stat-num" id="statUsers">0</div><div class="stat-label">Registered Sellers</div></div>
+    <div class="stat-item"><div class="stat-num" id="statCities">0</div><div class="stat-label">Cities</div></div>
+  </div>
+
   <main>
     <div class="filters-row">
       <div class="filter-chip active" onclick="filterCondition('All',this)">All Conditions</div>
@@ -369,8 +367,9 @@ function renderNav() {
       <div class="filter-chip" onclick="filterCondition('Fair',this)">🔧 Fair</div>
       <select class="sort-select" onchange="currentSort=this.value;renderListings()">
         <option value="newest">Newest First</option>
-        <option value="price_asc">Price: Low to High</option>
-        <option value="price_desc">Price: High to Low</option>
+        <option value="price_asc">Price: Low → High</option>
+        <option value="price_desc">Price: High → Low</option>
+        <option value="popular">Most Viewed</option>
       </select>
     </div>
     <div class="section-header">
@@ -406,15 +405,13 @@ function renderNav() {
 
 <!-- FAB -->
 <button class="sell-fab" id="sellFab" onclick="handleSellClick()">
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
   Sell Now
 </button>
 
 <!-- ===== AUTH MODAL ===== -->
 <div class="overlay" id="authModal" onclick="handleOverlayClick(event,'authModal')">
   <div class="modal" style="max-width:420px;">
-
-    <!-- STEP 1: Enter Email -->
     <div id="authStep1">
       <div class="modal-header">
         <div class="modal-title">Welcome 👋</div>
@@ -425,12 +422,8 @@ function renderNav() {
         <input class="form-input" id="authEmail" type="email" placeholder="aapki@email.com" autocomplete="email">
         <div class="email-hint">Aapki email par ek OTP bheja jayega. Sign in ya account create dono ke liye same process hai.</div>
       </div>
-      <button class="submit-btn" id="sendOtpBtn" onclick="sendEmailOTP()">
-        📨 OTP Bhejo
-      </button>
+      <button class="submit-btn" id="sendOtpBtn" onclick="sendEmailOTP()">📨 OTP Bhejo</button>
     </div>
-
-    <!-- STEP 2: Enter OTP -->
     <div id="authStep2" style="display:none;">
       <div class="modal-header">
         <div class="modal-title">OTP Verify Karo 🔐</div>
@@ -448,8 +441,8 @@ function renderNav() {
         <input class="otp-input" maxlength="1" type="text" inputmode="numeric" oninput="otpNav(this,4)" onkeydown="otpBack(event,4)">
         <input class="otp-input" maxlength="1" type="text" inputmode="numeric" oninput="otpNav(this,5)" onkeydown="otpBack(event,5)">
       </div>
-      <div class="form-group" id="nameStep2Group">
-        <label class="form-label">Aapka Naam (pehli baar login ke liye)</label>
+      <div class="form-group">
+        <label class="form-label">Aapka Naam (pehli baar ke liye)</label>
         <input class="form-input" id="authNameStep2" type="text" placeholder="Full Name">
       </div>
       <button class="submit-btn" id="verifyOtpBtn" onclick="verifyEmailOTP()">✅ Verify & Login</button>
@@ -457,7 +450,6 @@ function renderNav() {
         OTP nahi aaya? <span style="color:var(--accent);cursor:pointer;" onclick="resendEmailOTP()">Dobara bhejo</span>
       </p>
     </div>
-
   </div>
 </div>
 
@@ -503,7 +495,7 @@ function renderNav() {
     <div class="form-row">
       <div class="form-group">
         <label class="form-label">Price (₹)</label>
-        <input class="form-input" id="adPrice" type="number" placeholder="0">
+        <input class="form-input" id="adPrice" type="number" placeholder="0" min="0">
       </div>
       <div class="form-group">
         <label class="form-label">Location</label>
@@ -513,6 +505,19 @@ function renderNav() {
     <div class="form-group">
       <label class="form-label">Description</label>
       <textarea class="form-textarea" id="adDesc" placeholder="Apni cheez ke baare mein batao…"></textarea>
+    </div>
+    <div class="form-group">
+      <div class="toggle-row">
+        <div>
+          <div class="toggle-label">💬 Price Negotiable?</div>
+          <div class="toggle-sub">Buyers ko bargain karne ka option milega</div>
+        </div>
+        <label class="toggle-switch">
+          <input type="checkbox" id="adNegotiable">
+          <div class="toggle-track"></div>
+          <div class="toggle-thumb"></div>
+        </label>
+      </div>
     </div>
     <div class="form-group">
       <label class="form-label">Aapka Naam</label>
@@ -531,36 +536,38 @@ function renderNav() {
   <div class="modal" id="detailContent"></div>
 </div>
 
+<!-- PROFILE MODAL -->
+<div class="overlay" id="profileModal" onclick="handleOverlayClick(event,'profileModal')">
+  <div class="modal" style="max-width:480px;" id="profileContent"></div>
+</div>
+
+<!-- IMAGE ZOOM -->
+<div id="zoomOverlay" onclick="closeZoom()">
+  <img id="zoomImg" src="" alt="zoomed">
+</div>
+
 <!-- TOAST -->
 <div class="toast" id="toast"></div>
 
 <script>
-// ======= CONFIG =======
-const SUPABASE_URL_CFG = 'https://kytailsminhycuhdfirf.supabase.co';
+// ============================================================
+// CONFIG
+// ============================================================
+const SUPABASE_URL = 'https://kytailsminhycuhdfirf.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt5dGFpbHNtaW5oeWN1aGRmaXJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwNjA0MzAsImV4cCI6MjA5MTYzNjQzMH0.tAE0T3BAcr3keR10pJ8f8bib8VcAwzbJvzJGGi7mujA';
 const ADMIN_EMAIL = 'wazidansari02@gmail.com';
-const STORAGE_KEY = 'bazaarnow_listings_v2';
-const STORAGE_USERS_KEY = 'bazaarnow_users_v2';
-
 const CAT_ICON = {Mobiles:'📱',Cycles:'🚲',Clothes:'👕',Electronics:'💻',Furniture:'🛋️',Books:'📚',Vehicles:'🚗',Other:'📦'};
+const BADGE_CLASS = {'New':'badge-new','Like New':'badge-like','Good':'badge-good','Fair':'badge-fair'};
 
-// ======= DEMO PLACEHOLDERS =======
-function makeSvg(label, color) {
-  return 'data:image/svg+xml,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300"><rect width="400" height="300" fill="${color}"/><text x="200" y="140" fill="#ffffff66" text-anchor="middle" font-size="52">${label}</text><text x="200" y="175" fill="#ffffff33" text-anchor="middle" font-size="13" font-family="sans-serif">No Photo</text></svg>`);
-}
-const DEMO_PH = {Mobiles:makeSvg('📱','#203050'),Cycles:makeSvg('🚲','#182b18'),Clothes:makeSvg('👕','#2a1a2e'),Electronics:makeSvg('💻','#1a2030'),Furniture:makeSvg('🛋️','#281e10'),Books:makeSvg('📚','#201428'),Vehicles:makeSvg('🚗','#101820'),Other:makeSvg('📦','#1e1e1e')};
+// ============================================================
+// SUPABASE INIT
+// ============================================================
+const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+window._supabase = _supabase;
 
-const DEFAULT_LISTINGS = [
-  {id:101,title:'iPhone 12 Pro — 128GB Pacific Blue',category:'Mobiles',condition:'Like New',price:28000,location:'Gurugram',desc:'Bought 1.5 years ago. Battery health 89%. All original accessories included.',seller:'Rahul K.',phone:'+91 98765 43210',favs:false,postedAt:Date.now()-7200000,ownerUid:'demo1'},
-  {id:102,title:'Trek MTB Cycle 21-Speed',category:'Cycles',condition:'Good',price:6500,location:'Noida',desc:'Used for 2 years. Gear shifters work fine. New tyres fitted 3 months back.',seller:'Priya S.',phone:'+91 91234 56789',favs:false,postedAt:Date.now()-18000000,ownerUid:'demo2'},
-  {id:103,title:"Levi's Jacket — Size M",category:'Clothes',condition:'Like New',price:800,location:'Delhi',desc:'Worn only twice. Perfect condition. Original MRP ₹3499.',seller:'Amit D.',phone:'+91 87654 32109',favs:false,postedAt:Date.now()-86400000,ownerUid:'demo3'},
-  {id:104,title:'Dell Laptop i5 8th Gen 8GB RAM',category:'Electronics',condition:'Good',price:22000,location:'Faridabad',desc:'Working perfectly. SSD 256GB. Battery backup ~3hrs. Charger included.',seller:'Neha G.',phone:'+91 76543 21098',favs:false,postedAt:Date.now()-172800000,ownerUid:'demo4'},
-  {id:105,title:'Wooden Study Table — Walnut Finish',category:'Furniture',condition:'Good',price:3200,location:'Gurgaon',desc:'Solid wood, 4 ft wide. Minor surface scratches. Self-pickup only.',seller:'Vikram M.',phone:'+91 65432 10987',favs:false,postedAt:Date.now()-259200000,ownerUid:'demo5'},
-  {id:106,title:'UPSC Study Material 2023 Full Set',category:'Books',condition:'Good',price:1200,location:'Delhi',desc:'Complete 18-book set. Very helpful for prelims.',seller:'Sunita R.',phone:'+91 54321 09876',favs:false,postedAt:Date.now()-345600000,ownerUid:'demo6'},
-  {id:107,title:'Honda Activa 5G — 2020 Model',category:'Vehicles',condition:'Good',price:58000,location:'Gurugram',desc:'25,000 km driven. Insurance valid. All documents clear.',seller:'Rahul K.',phone:'+91 98765 43210',favs:false,postedAt:Date.now()-432000000,ownerUid:'demo1'},
-  {id:108,title:'Samsung Galaxy Buds Pro',category:'Mobiles',condition:'Like New',price:4500,location:'Noida',desc:'Used for 3 months. ANC works great. Case and cable included.',seller:'Priya S.',phone:'+91 91234 56789',favs:false,postedAt:Date.now()-518400000,ownerUid:'demo2'},
-];
-
-// ======= STATE =======
+// ============================================================
+// STATE
+// ============================================================
 let currentUser = null;
 let listings = [];
 let users = [];
@@ -568,115 +575,165 @@ let uploadedFiles = [];
 let activeCategory = 'All';
 let activeCondition = 'All';
 let currentSort = 'newest';
+let searchDebounceTimer = null;
 
-// ======= AUTH =======
-window.onAuthChanged = function(sbUser) {
-  if (sbUser) {
-    const email = sbUser.email || '';
-    const meta = sbUser.user_metadata || {};
-    const name = meta.name || meta.full_name || email.split('@')[0];
-    const isAdmin = email === ADMIN_EMAIL;
-    currentUser = { uid: sbUser.id, name, email, isAdmin };
-    sbUpsertUser(sbUser.id, { name, email, isAdmin });
-  } else {
-    currentUser = null;
-  }
-  renderNav();
-  renderListings();
-};
-// Sell FAB visibility control
-const fab = document.getElementById('sellFab');
-if (fab) {
-  fab.style.display = currentUser ? 'flex' : 'none';
+// ============================================================
+// DEMO PLACEHOLDERS
+// ============================================================
+function makeSvg(label, color) {
+  return 'data:image/svg+xml,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300"><rect width="400" height="300" fill="${color}"/><text x="200" y="140" fill="#ffffff55" text-anchor="middle" font-size="52">${label}</text><text x="200" y="175" fill="#ffffff33" text-anchor="middle" font-size="13" font-family="sans-serif">No Photo</text></svg>`);
 }
-// ======= SUPABASE OPS =======
+const DEMO_PH = {
+  Mobiles:makeSvg('📱','#203050'),Cycles:makeSvg('🚲','#182b18'),
+  Clothes:makeSvg('👕','#2a1a2e'),Electronics:makeSvg('💻','#1a2030'),
+  Furniture:makeSvg('🛋️','#281e10'),Books:makeSvg('📚','#201428'),
+  Vehicles:makeSvg('🚗','#101820'),Other:makeSvg('📦','#1e1e1e')
+};
+const NO_IMG = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='300'%3E%3Crect width='400' height='300' fill='%231e1d1b'/%3E%3Ctext x='200' y='160' fill='%238a8680' text-anchor='middle' font-size='14' font-family='sans-serif'%3ENo Image%3C/text%3E%3C/svg%3E";
+
+const DEFAULT_LISTINGS = [
+  {id:101,title:'iPhone 12 Pro — 128GB Pacific Blue',category:'Mobiles',condition:'Like New',price:28000,location:'Gurugram',desc:'Bought 1.5 years ago. Battery health 89%. All original accessories included. No scratches, kept in cover always.',seller:'Rahul K.',phone:'+91 98765 43210',negotiable:false,views:342,postedAt:Date.now()-7200000,ownerUid:'demo1'},
+  {id:102,title:'Trek MTB Cycle 21-Speed',category:'Cycles',condition:'Good',price:6500,location:'Noida',desc:'Used for 2 years. Gear shifters work fine. New tyres fitted 3 months back. Great for daily commute.',seller:'Priya S.',phone:'+91 91234 56789',negotiable:true,views:87,postedAt:Date.now()-18000000,ownerUid:'demo2'},
+  {id:103,title:"Levi's Jacket — Size M",category:'Clothes',condition:'Like New',price:800,location:'Delhi',desc:'Worn only twice. Perfect condition. Original MRP ₹3499. No defects.',seller:'Amit D.',phone:'+91 87654 32109',negotiable:true,views:55,postedAt:Date.now()-86400000,ownerUid:'demo3'},
+  {id:104,title:'Dell Laptop i5 8th Gen 8GB RAM',category:'Electronics',condition:'Good',price:22000,location:'Faridabad',desc:'Working perfectly. SSD 256GB. Battery backup ~3hrs. Original charger included. Windows 11 activated.',seller:'Neha G.',phone:'+91 76543 21098',negotiable:false,views:210,postedAt:Date.now()-172800000,ownerUid:'demo4'},
+  {id:105,title:'Wooden Study Table — Walnut Finish',category:'Furniture',condition:'Good',price:3200,location:'Gurgaon',desc:'Solid wood, 4 ft wide. Minor surface scratches only. Self-pickup only from Gurgaon Sector 45.',seller:'Vikram M.',phone:'+91 65432 10987',negotiable:true,views:43,postedAt:Date.now()-259200000,ownerUid:'demo5'},
+  {id:106,title:'UPSC Study Material 2023 Full Set',category:'Books',condition:'Good',price:1200,location:'Delhi',desc:'Complete 18-book set. Very helpful for prelims. Lightly highlighted in some chapters.',seller:'Sunita R.',phone:'+91 54321 09876',negotiable:false,views:128,postedAt:Date.now()-345600000,ownerUid:'demo6'},
+  {id:107,title:'Honda Activa 5G — 2020 Model',category:'Vehicles',condition:'Good',price:58000,location:'Gurugram',desc:'25,000 km driven. Insurance valid till Dec 2025. All documents clear. Single owner.',seller:'Rahul K.',phone:'+91 98765 43210',negotiable:true,views:512,postedAt:Date.now()-432000000,ownerUid:'demo1'},
+  {id:108,title:'Samsung Galaxy Buds Pro',category:'Mobiles',condition:'Like New',price:4500,location:'Noida',desc:'Used for 3 months. ANC works great. Case and cable included. Original box available.',seller:'Priya S.',phone:'+91 91234 56789',negotiable:false,views:76,postedAt:Date.now()-518400000,ownerUid:'demo2'},
+];
+
+// ============================================================
+// SUPABASE OPERATIONS
+// ============================================================
 async function sbLoadListings() {
   try {
-    const { data, error } = await window._supabase
-      .from('listings').select('*').order('posted_at', { ascending: false });
+    const { data, error } = await _supabase.from('listings').select('*').order('posted_at', { ascending: false });
     if (error) throw error;
     return data.map(r => ({
       id: r.id, title: r.title, category: r.category, condition: r.condition,
       price: r.price, location: r.location, desc: r.description,
-      seller: r.seller_name, phone: r.seller_phone, imgs: r.images || [],
-      favs: false, postedAt: new Date(r.posted_at).getTime(), ownerUid: r.owner_uid
+      seller: r.seller_name, phone: r.seller_phone,
+      imgs: r.images || [], negotiable: r.negotiable || false,
+      views: r.views || 0, favs: false,
+      postedAt: new Date(r.posted_at).getTime(), ownerUid: r.owner_uid
     }));
   } catch(e) { console.warn('Load listings err:', e); return null; }
 }
+
 async function sbSaveListing(l) {
   try {
-    const { error } = await window._supabase.from('listings').insert({
+    const { error } = await _supabase.from('listings').insert({
       title: l.title, category: l.category, condition: l.condition,
       price: l.price, location: l.location, description: l.desc,
       seller_name: l.seller, seller_phone: l.phone,
       images: l.imgs || [], owner_uid: l.ownerUid,
+      negotiable: l.negotiable || false, views: 0,
       posted_at: new Date(l.postedAt).toISOString()
     });
     if (error) throw error;
     return true;
   } catch(e) { console.warn('Save listing err:', e); return false; }
 }
+
 async function sbDeleteListing(id) {
-  try { await window._supabase.from('listings').delete().eq('id', id); } catch(e){}
+  try { await _supabase.from('listings').delete().eq('id', id); } catch(e) {}
 }
+
+async function sbIncrementView(id) {
+  try {
+    const l = listings.find(x => x.id === id);
+    if (!l) return;
+    const newViews = (l.views || 0) + 1;
+    l.views = newViews;
+    await _supabase.from('listings').update({ views: newViews }).eq('id', id);
+  } catch(e) {}
+}
+
 async function sbUpsertUser(uid, data) {
   try {
-    await window._supabase.from('users').upsert({
-      uid, name: data.name||'', email: data.email||'', is_admin: data.isAdmin||false
+    await _supabase.from('users').upsert({
+      uid, name: data.name || '', email: data.email || '', is_admin: data.isAdmin || false
     }, { onConflict: 'uid' });
-  } catch(e){}
+  } catch(e) {}
 }
+
 async function sbLoadUsers() {
   try {
-    const { data, error } = await window._supabase.from('users').select('*').order('created_at', { ascending: false });
+    const { data, error } = await _supabase.from('users').select('*').order('created_at', { ascending: false });
     if (error) throw error;
     return data.map(r => ({
-      uid: r.uid, name: r.name, email: r.email||'',
-      isAdmin: r.is_admin||false, createdAt: new Date(r.created_at||Date.now()).getTime()
+      uid: r.uid, name: r.name, email: r.email || '',
+      isAdmin: r.is_admin || false, createdAt: new Date(r.created_at || Date.now()).getTime()
     }));
   } catch(e) { return []; }
 }
 
-// ======= INIT =======
+// ============================================================
+// INIT
+// ============================================================
 async function init() {
-  // Load session
-  const { data: { session } } = await window._supabase.auth.getSession();
+  showSkeletons();
+
+  const { data: { session } } = await _supabase.auth.getSession();
   if (session?.user) {
-    window.onAuthChanged(session.user);
+    applyUser(session.user);
   } else {
     renderNav();
   }
-  // Load listings
+
+  _supabase.auth.onAuthStateChange((event, session) => {
+    if (session?.user) {
+      applyUser(session.user);
+    } else if (event === 'SIGNED_OUT') {
+      currentUser = null;
+      renderNav();
+      updateFab();
+    }
+  });
+
   const sbListings = await sbLoadListings();
   if (sbListings && sbListings.length > 0) {
     listings = sbListings;
   } else {
-    listings = DEFAULT_LISTINGS.map(l => ({...l, imgs:[DEMO_PH[l.category]||DEMO_PH.Other]}));
+    listings = DEFAULT_LISTINGS.map(l => ({ ...l, imgs: [DEMO_PH[l.category] || DEMO_PH.Other] }));
   }
+
   users = await sbLoadUsers() || [];
   renderListings();
+  updateStats();
 }
-  window._supabase.auth.onAuthStateChange((event, session) => {
-  if (session?.user) {
-    window.onAuthChanged(session.user);
-  }
-});
+
+function applyUser(sbUser) {
+  const email = sbUser.email || '';
+  const meta = sbUser.user_metadata || {};
+  const name = meta.name || meta.full_name || email.split('@')[0];
+  const isAdmin = email === ADMIN_EMAIL;
+  currentUser = { uid: sbUser.id, name, email, isAdmin };
+  sbUpsertUser(sbUser.id, { name, email, isAdmin });
+  renderNav();
+  updateFab();
+  renderListings();
+}
+
 init();
 
-// ======= NAV =======
+// ============================================================
+// NAV
+// ============================================================
 function renderNav() {
   const nav = document.getElementById('navRight');
   if (currentUser) {
-    const init = (currentUser.name||'U')[0].toUpperCase();
+    const ini = (currentUser.name || 'U')[0].toUpperCase();
     nav.innerHTML = `
       <div style="position:relative;" id="userMenuWrap">
-        <button class="user-avatar-btn" onclick="toggleUserMenu()">${init}</button>
+        <button class="user-avatar-btn" onclick="toggleUserMenu()" title="${esc(currentUser.name)}">${ini}</button>
         <div class="user-dropdown" id="userDropdown">
           <div class="user-dropdown-info">
             <div class="user-dropdown-name">${esc(currentUser.name)}</div>
             <div class="user-dropdown-email">${esc(currentUser.email)}</div>
           </div>
           <div class="user-dropdown-item" onclick="closeDropdown();showMainView()">🏠 Marketplace</div>
+          <div class="user-dropdown-item" onclick="closeDropdown();openProfileModal()">👤 My Profile & Listings</div>
           ${currentUser.isAdmin ? `<div class="user-dropdown-item" onclick="closeDropdown();showAdminPanel()">⚙️ Admin Panel</div>` : ''}
           <div class="user-dropdown-item" style="color:var(--accent2);" onclick="handleLogout()">🚪 Logout</div>
         </div>
@@ -686,121 +743,184 @@ function renderNav() {
   } else {
     nav.innerHTML = `
       <button class="btn btn-ghost" onclick="openAuthModal()">Login</button>
-      <button class="btn btn-primary" onclick="openAuthModal()">Register</button>
+      <button class="btn btn-primary" onclick="openAuthModal()">Register / Sell Now +</button>
     `;
   }
 }
+
 function toggleUserMenu() { document.getElementById('userDropdown')?.classList.toggle('open'); }
 function closeDropdown() { document.getElementById('userDropdown')?.classList.remove('open'); }
 document.addEventListener('click', e => {
   const wrap = document.getElementById('userMenuWrap');
   if (wrap && !wrap.contains(e.target)) closeDropdown();
+  const sugg = document.getElementById('searchSuggestions');
+  const inp = document.getElementById('searchInput');
+  if (sugg && inp && !inp.contains(e.target) && !sugg.contains(e.target)) {
+    sugg.classList.remove('open');
+  }
 });
 
-// ======= VIEWS =======
-function showMainView() {
-  document.getElementById('mainView').style.display='';
-  document.getElementById('adminView').style.display='none';
-  document.getElementById('sellFab').style.display='';
+function updateFab() {
+  const fab = document.getElementById('sellFab');
+  if (!fab) return;
+  fab.style.display = currentUser ? 'flex' : 'none';
 }
+
+// ============================================================
+// VIEWS
+// ============================================================
+function showMainView() {
+  document.getElementById('mainView').style.display = '';
+  document.getElementById('adminView').style.display = 'none';
+  updateFab();
+}
+
 function showAdminPanel() {
   if (!currentUser?.isAdmin) { showToast('⛔ Admin only', true); return; }
-  document.getElementById('mainView').style.display='none';
-  document.getElementById('adminView').style.display='';
-  document.getElementById('sellFab').style.display='none';
+  document.getElementById('mainView').style.display = 'none';
+  document.getElementById('adminView').style.display = '';
+  document.getElementById('sellFab').style.display = 'none';
   renderAdminPanel();
 }
 
-// ======= HELPERS =======
-function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+// ============================================================
+// HELPERS
+// ============================================================
+function esc(s) {
+  return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
 function timeAgo(ts) {
-  const d=Date.now()-ts, m=Math.floor(d/60000);
-  if(m<1) return 'Just now'; if(m<60) return m+'m ago';
-  const h=Math.floor(m/60); if(h<24) return h+'h ago';
-  return Math.floor(h/24)+'d ago';
+  const d = Date.now() - ts, m = Math.floor(d / 60000);
+  if (m < 1) return 'Just now';
+  if (m < 60) return m + 'm ago';
+  const h = Math.floor(m / 60);
+  if (h < 24) return h + 'h ago';
+  const days = Math.floor(h / 24);
+  if (days < 30) return days + 'd ago';
+  return Math.floor(days / 30) + 'mo ago';
 }
-function showToast(msg, isErr=false) {
-  const t=document.getElementById('toast');
-  t.textContent=msg; t.className='toast'+(isErr?' error':'');
+
+function showToast(msg, isErr = false) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast' + (isErr ? ' error' : '');
   t.classList.add('show');
-  setTimeout(()=>t.classList.remove('show'), 3500);
+  setTimeout(() => t.classList.remove('show'), 3500);
 }
-function showModal(id) { document.getElementById(id).classList.add('open'); document.body.style.overflow='hidden'; }
-function hideModal(id) { document.getElementById(id).classList.remove('open'); document.body.style.overflow=''; }
+
+function showModal(id) { document.getElementById(id).classList.add('open'); document.body.style.overflow = 'hidden'; }
+function hideModal(id) { document.getElementById(id).classList.remove('open'); document.body.style.overflow = ''; }
 function handleOverlayClick(e, id) { if (e.target.classList.contains('overlay')) hideModal(id); }
 
-// ======= AUTH MODAL (EMAIL OTP via Supabase) =======
+function updateStats() {
+  const cities = [...new Set(listings.map(l => l.location).filter(Boolean))];
+  document.getElementById('statListings').textContent = listings.length;
+  document.getElementById('statUsers').textContent = users.length || '10+';
+  document.getElementById('statCities').textContent = cities.length || 8;
+}
+
+// ============================================================
+// SEARCH WITH SUGGESTIONS
+// ============================================================
+function onSearchInput() {
+  clearTimeout(searchDebounceTimer);
+  searchDebounceTimer = setTimeout(() => {
+    renderListings();
+    showSearchSuggestions();
+  }, 200);
+}
+
+function showSearchSuggestions() {
+  const q = document.getElementById('searchInput').value.trim().toLowerCase();
+  const sugg = document.getElementById('searchSuggestions');
+  if (!q || q.length < 2) { sugg.classList.remove('open'); return; }
+  const matches = listings.filter(l =>
+    l.title.toLowerCase().includes(q) || l.category.toLowerCase().includes(q)
+  ).slice(0, 5);
+  if (!matches.length) { sugg.classList.remove('open'); return; }
+  sugg.innerHTML = matches.map(l => `
+    <div class="suggestion-item" onclick="selectSuggestion('${esc(l.title)}',${l.id})">
+      <span>${CAT_ICON[l.category] || '📦'}</span>
+      <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(l.title)}</span>
+      <span class="sug-cat">${esc(l.category)}</span>
+    </div>
+  `).join('');
+  sugg.classList.add('open');
+}
+
+function selectSuggestion(title, id) {
+  document.getElementById('searchInput').value = title;
+  document.getElementById('searchSuggestions').classList.remove('open');
+  openDetail(id);
+}
+
+// ============================================================
+// SKELETONS
+// ============================================================
+function showSkeletons() {
+  const grid = document.getElementById('listingsGrid');
+  grid.innerHTML = Array(8).fill(0).map(() => `
+    <div class="skeleton-card">
+      <div class="skeleton skeleton-img"></div>
+      <div class="skeleton-body">
+        <div class="skeleton skeleton-line" style="width:40%"></div>
+        <div class="skeleton skeleton-line" style="width:80%"></div>
+        <div class="skeleton skeleton-line" style="width:60%"></div>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ============================================================
+// AUTH MODAL
+// ============================================================
 function openAuthModal() {
-  document.getElementById('authStep1').style.display='';
-  document.getElementById('authStep2').style.display='none';
-  document.getElementById('authEmail').value='';
+  document.getElementById('authStep1').style.display = '';
+  document.getElementById('authStep2').style.display = 'none';
+  document.getElementById('authEmail').value = '';
   clearOtpInputs();
   showModal('authModal');
+  setTimeout(() => document.getElementById('authEmail')?.focus(), 150);
 }
+
 function goBackToStep1() {
-  document.getElementById('authStep1').style.display='';
-  document.getElementById('authStep2').style.display='none';
+  document.getElementById('authStep1').style.display = '';
+  document.getElementById('authStep2').style.display = 'none';
   clearOtpInputs();
 }
+
 function clearOtpInputs() {
-  document.querySelectorAll('.otp-input').forEach(i => i.value='');
+  document.querySelectorAll('.otp-input').forEach(i => i.value = '');
 }
 
 async function sendEmailOTP() {
   const email = document.getElementById('authEmail').value.trim().toLowerCase();
-
-  if (!email) {
-    showToast('⚠️ Please enter email', true);
-    return;
-  }
+  if (!email || !email.includes('@')) { showToast('⚠️ Valid email daalo', true); return; }
 
   const btn = document.getElementById('sendOtpBtn');
   btn.disabled = true;
-  btn.innerHTML = '<span class="spinner"></span> Sending...';
+  btn.innerHTML = '<span class="spinner"></span> Sending…';
 
   try {
-    const { error } = await window._supabase.auth.signInWithOtp({
-      email: email,
-      options: {
-        emailRedirectTo: window.location.origin, // 🔥 VERY IMPORTANT FIX
-        shouldCreateUser: true
-      }
+    const { error } = await _supabase.auth.signInWithOtp({
+      email,
+      options: { emailRedirectTo: window.location.origin, shouldCreateUser: true }
     });
-
     if (error) throw error;
 
     document.getElementById('otpSentTo').textContent = email;
     document.getElementById('authStep1').style.display = 'none';
     document.getElementById('authStep2').style.display = '';
-
     clearOtpInputs();
-
-    setTimeout(() => {
-      document.querySelectorAll('.otp-input')[0]?.focus();
-    }, 100);
-
+    setTimeout(() => document.querySelectorAll('.otp-input')[0]?.focus(), 100);
     showToast('📧 OTP bhej diya! Email check karo.');
-  } catch (e) {
-    showToast('❌ ' + e.message, true);
+  } catch(e) {
+    showToast('❌ ' + (e.message || 'OTP bhejne mein error'), true);
   }
 
   btn.disabled = false;
   btn.innerHTML = '📨 OTP Bhejo';
-}
-
-    document.getElementById('otpSentTo').textContent = email;
-    document.getElementById('authStep1').style.display='none';
-    document.getElementById('authStep2').style.display='';
-    clearOtpInputs();
-    setTimeout(()=>document.querySelectorAll('.otp-input')[0]?.focus(), 100);
-    showToast('📧 OTP bhej diya! Email check karo.');
-  } catch(e) {
-    showToast('❌ ' + (e.message || 'OTP bhejne mein error'), true);
-    console.error(e);
-  } finally {
-    btn.disabled = false;
-    btn.innerHTML = '📨 OTP Bhejo';
-  }
 }
 
 async function resendEmailOTP() {
@@ -813,7 +933,7 @@ async function resendEmailOTP() {
 
 async function verifyEmailOTP() {
   const inputs = document.querySelectorAll('.otp-input');
-  const token = [...inputs].map(i=>i.value).join('');
+  const token = [...inputs].map(i => i.value).join('');
   if (token.length !== 6) { showToast('⚠️ 6 digit OTP daalo', true); return; }
 
   const email = document.getElementById('otpSentTo').textContent.trim();
@@ -824,24 +944,19 @@ async function verifyEmailOTP() {
   btn.innerHTML = '<span class="spinner"></span> Verify ho raha hai…';
 
   try {
-    const { data, error } = await window._supabase.auth.verifyOtp({
-      email,
-      token,
-      type: 'email'
-    });
+    const { data, error } = await _supabase.auth.verifyOtp({ email, token, type: 'email' });
     if (error) throw error;
 
-    // Name update karo agar diya hai
     if (name && data.user) {
-      await window._supabase.auth.updateUser({ data: { name } });
+      await _supabase.auth.updateUser({ data: { name } });
     }
 
     hideModal('authModal');
     showToast('🎉 Login ho gaye! Welcome ' + (name || email.split('@')[0]) + '!');
   } catch(e) {
-    const msg = e.message || 'OTP galat hai ya expire ho gaya';
-    showToast('❌ ' + msg, true);
+    showToast('❌ ' + (e.message || 'OTP galat hai ya expire ho gaya'), true);
   }
+
   btn.disabled = false;
   btn.innerHTML = '✅ Verify & Login';
 }
@@ -849,304 +964,560 @@ async function verifyEmailOTP() {
 function otpNav(input, idx) {
   input.value = input.value.replace(/\D/g, '');
   if (input.value && idx < 5) {
-    document.querySelectorAll('.otp-input')[idx+1]?.focus();
+    document.querySelectorAll('.otp-input')[idx + 1]?.focus();
   }
-  // Auto-verify when all 6 filled
-  const all = [...document.querySelectorAll('.otp-input')].map(i=>i.value);
-  if (all.every(v=>v) && all.join('').length===6) verifyEmailOTP();
+  const all = [...document.querySelectorAll('.otp-input')].map(i => i.value);
+  if (all.every(v => v) && all.join('').length === 6) verifyEmailOTP();
 }
+
 function otpBack(e, idx) {
   if (e.key === 'Backspace' && !e.target.value && idx > 0) {
-    document.querySelectorAll('.otp-input')[idx-1]?.focus();
+    document.querySelectorAll('.otp-input')[idx - 1]?.focus();
   }
 }
 
 async function handleLogout() {
-  await window._supabase.auth.signOut();
+  closeDropdown();
+  await _supabase.auth.signOut();
   currentUser = null;
   renderNav();
+  updateFab();
   renderListings();
   showToast('👋 Logout ho gaye');
   showMainView();
 }
 
-// ======= SELL =======
+// ============================================================
+// SELL
+// ============================================================
 function handleSellClick() {
   if (!currentUser) { showToast('🔒 Pehle login karo'); openAuthModal(); return; }
-  const n=document.getElementById('adSeller'); if(n&&currentUser.name) n.value=currentUser.name;
+  const n = document.getElementById('adSeller');
+  if (n && currentUser.name) n.value = currentUser.name;
   showModal('sellModal');
 }
 
-// ======= UPLOAD (Cloudinary) =======
+// ============================================================
+// UPLOAD (Cloudinary)
+// ============================================================
 async function uploadToCloudinary(file) {
   const fd = new FormData();
   fd.append('file', file);
   fd.append('upload_preset', 'my_upload');
-  const res = await fetch('https://api.cloudinary.com/v1_1/dada2emui/image/upload', { method:'POST', body:fd });
+  const res = await fetch('https://api.cloudinary.com/v1_1/dada2emui/image/upload', { method: 'POST', body: fd });
   const d = await res.json();
   if (!d.secure_url) throw new Error('Upload failed');
   return d.secure_url;
 }
+
 async function handleFiles(files) {
   uploadedFiles = [];
   const grid = document.getElementById('previewGrid');
   const status = document.getElementById('uploadStatus');
   grid.innerHTML = '';
   status.textContent = '⏳ Photos upload ho rahi hain…';
-  for (let f of [...files].slice(0,6)) {
+
+  for (let f of [...files].slice(0, 6)) {
     try {
       const url = await uploadToCloudinary(f);
       uploadedFiles.push(url);
-      grid.innerHTML += `<div class="preview-item"><img src="${url}"><button onclick="removeImg(${uploadedFiles.length-1})">✕</button></div>`;
-    } catch(e) { status.textContent = '❌ Ek photo upload nahi hui'; }
+      const idx = uploadedFiles.length - 1;
+      const div = document.createElement('div');
+      div.className = 'preview-item';
+      div.innerHTML = `<img src="${url}"><button onclick="removeImg(${idx})">✕</button>`;
+      grid.appendChild(div);
+    } catch(e) {
+      status.textContent = '❌ Ek photo upload nahi hui';
+    }
   }
   status.textContent = uploadedFiles.length ? `✅ ${uploadedFiles.length} photo(s) ready` : '';
 }
-function removeImg(i) { uploadedFiles.splice(i,1); document.getElementById('uploadStatus').textContent=uploadedFiles.length?`✅ ${uploadedFiles.length} photo(s) ready`:''; }
 
-// ======= SUBMIT AD =======
+function removeImg(i) {
+  uploadedFiles.splice(i, 1);
+  document.getElementById('uploadStatus').textContent = uploadedFiles.length ? `✅ ${uploadedFiles.length} photo(s) ready` : '';
+  const items = document.querySelectorAll('.preview-item');
+  if (items[i]) items[i].remove();
+}
+
+// ============================================================
+// SUBMIT AD
+// ============================================================
 async function submitAd() {
   if (!currentUser) { showToast('🔒 Login karke ad post karo', true); openAuthModal(); return; }
-  const title=document.getElementById('adTitle').value.trim();
-  const category=document.getElementById('adCategory').value;
-  const condition=document.getElementById('adCondition').value;
-  const price=parseInt(document.getElementById('adPrice').value)||0;
-  const location=document.getElementById('adLocation').value.trim();
-  const desc=document.getElementById('adDesc').value.trim();
-  const seller=document.getElementById('adSeller').value.trim();
-  const phone=document.getElementById('adPhone').value.trim();
-  if (!title||!category||!condition||!price||!location||!seller) {
+  const title = document.getElementById('adTitle').value.trim();
+  const category = document.getElementById('adCategory').value;
+  const condition = document.getElementById('adCondition').value;
+  const price = parseInt(document.getElementById('adPrice').value) || 0;
+  const location = document.getElementById('adLocation').value.trim();
+  const desc = document.getElementById('adDesc').value.trim();
+  const seller = document.getElementById('adSeller').value.trim();
+  const phone = document.getElementById('adPhone').value.trim();
+  const negotiable = document.getElementById('adNegotiable').checked;
+
+  if (!title || !category || !condition || !price || !location || !seller) {
     showToast('⚠️ Saare zaruri fields bharo', true); return;
   }
+
   const btn = document.getElementById('adSubmitBtn');
-  btn.disabled=true; btn.innerHTML='<span class="spinner"></span> Post ho raha hai…';
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Post ho raha hai…';
 
   const id = Date.now();
-  const imgs = uploadedFiles.length ? uploadedFiles : [DEMO_PH[category]||DEMO_PH.Other];
-  const newL = { id, title, category, condition, price, location, desc: desc||'No description.',
-    seller, phone: phone||'Not provided', imgs, favs:false,
-    postedAt: Date.now(), ownerUid: currentUser.uid };
+  const imgs = uploadedFiles.length ? [...uploadedFiles] : [DEMO_PH[category] || DEMO_PH.Other];
+  const newL = {
+    id, title, category, condition, price, location,
+    desc: desc || 'No description.',
+    seller, phone: phone || 'Not provided',
+    imgs, negotiable, views: 0,
+    favs: false, postedAt: Date.now(), ownerUid: currentUser.uid
+  };
 
   await sbSaveListing(newL);
   listings.unshift(newL);
   hideModal('sellModal');
   resetSellForm();
   renderListings();
+  updateStats();
   showToast('🎉 Ad post ho gaya! Sab dekh sakte hain!');
-  btn.disabled=false; btn.innerHTML='🚀 Ad Post Karo — Free!';
-}
-function resetSellForm() {
-  ['adTitle','adPrice','adLocation','adDesc','adSeller','adPhone'].forEach(id=>document.getElementById(id).value='');
-  document.getElementById('adCategory').value='';
-  document.getElementById('adCondition').value='';
-  uploadedFiles=[];
-  document.getElementById('previewGrid').innerHTML='';
-  document.getElementById('uploadStatus').textContent='';
+
+  btn.disabled = false;
+  btn.innerHTML = '🚀 Ad Post Karo — Free!';
 }
 
-// ======= RENDER LISTINGS =======
+function resetSellForm() {
+  ['adTitle','adPrice','adLocation','adDesc','adSeller','adPhone'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  const cat = document.getElementById('adCategory');
+  const cond = document.getElementById('adCondition');
+  const neg = document.getElementById('adNegotiable');
+  if (cat) cat.value = '';
+  if (cond) cond.value = '';
+  if (neg) neg.checked = false;
+  uploadedFiles = [];
+  document.getElementById('previewGrid').innerHTML = '';
+  document.getElementById('uploadStatus').textContent = '';
+}
+
+// ============================================================
+// RENDER LISTINGS
+// ============================================================
 function renderListings() {
   let filtered = [...listings];
-  const q = document.getElementById('searchInput').value.toLowerCase();
-  if (q) filtered = filtered.filter(l=>l.title.toLowerCase().includes(q)||l.category.toLowerCase().includes(q)||l.location.toLowerCase().includes(q));
-  if (activeCategory!=='All') filtered=filtered.filter(l=>l.category===activeCategory);
-  if (activeCondition!=='All') filtered=filtered.filter(l=>l.condition===activeCondition);
-  if (currentSort==='price_asc') filtered.sort((a,b)=>a.price-b.price);
-  else if (currentSort==='price_desc') filtered.sort((a,b)=>b.price-a.price);
-  else filtered.sort((a,b)=>(b.postedAt||0)-(a.postedAt||0));
+  const q = (document.getElementById('searchInput')?.value || '').toLowerCase().trim();
+  if (q) filtered = filtered.filter(l =>
+    l.title.toLowerCase().includes(q) ||
+    l.category.toLowerCase().includes(q) ||
+    l.location.toLowerCase().includes(q) ||
+    (l.desc || '').toLowerCase().includes(q)
+  );
+  if (activeCategory !== 'All') filtered = filtered.filter(l => l.category === activeCategory);
+  if (activeCondition !== 'All') filtered = filtered.filter(l => l.condition === activeCondition);
+
+  if (currentSort === 'price_asc') filtered.sort((a, b) => a.price - b.price);
+  else if (currentSort === 'price_desc') filtered.sort((a, b) => b.price - a.price);
+  else if (currentSort === 'popular') filtered.sort((a, b) => (b.views || 0) - (a.views || 0));
+  else filtered.sort((a, b) => (b.postedAt || 0) - (a.postedAt || 0));
 
   const grid = document.getElementById('listingsGrid');
-  document.getElementById('listingCount').textContent = filtered.length+' ads';
-  document.getElementById('gridTitle').textContent = activeCategory==='All'?'All Listings':activeCategory;
+  document.getElementById('listingCount').textContent = filtered.length + ' ads';
+  document.getElementById('gridTitle').textContent = activeCategory === 'All' ? 'All Listings' : (CAT_ICON[activeCategory] || '') + ' ' + activeCategory;
 
   if (!filtered.length) {
-    grid.innerHTML='<div class="empty"><p>Koi listing nahi mili</p></div>'; return;
+    grid.innerHTML = `<div class="empty"><div class="empty-icon">${activeCategory !== 'All' ? (CAT_ICON[activeCategory] || '📦') : '🔍'}</div><p>Koi listing nahi mili</p><div class="empty-sub">Try different keywords ya category</div></div>`;
+    return;
   }
-  const noImg="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='300'%3E%3Crect width='400' height='300' fill='%231e1d1b'/%3E%3Ctext x='200' y='160' fill='%238a8680' text-anchor='middle' font-size='14' font-family='sans-serif'%3ENo Image%3C/text%3E%3C/svg%3E";
-  grid.innerHTML = filtered.map(l => {
-    const img = (l.imgs&&l.imgs[0]) ? l.imgs[0] : noImg;
-    const isOwn = currentUser && l.ownerUid===currentUser.uid;
-    return `<div class="card" onclick="openDetail(${l.id})">
+
+  grid.innerHTML = filtered.map((l, i) => {
+    const img = (l.imgs && l.imgs[0]) ? l.imgs[0] : NO_IMG;
+    const isOwn = currentUser && l.ownerUid === currentUser.uid;
+    const bc = BADGE_CLASS[l.condition] || '';
+    return `<div class="card" onclick="openDetail(${l.id})" style="animation-delay:${Math.min(i * 0.04, 0.4)}s">
       <div class="card-img-wrapper">
-        <img src="${img}" alt="${esc(l.title)}" loading="lazy" onerror="this.src='${noImg}'">
-        <div class="card-badge">${l.condition}</div>
-        ${isOwn?`<div style="position:absolute;bottom:.5rem;left:.5rem;background:var(--green);color:#000;font-size:.65rem;font-weight:700;padding:.15rem .45rem;border-radius:4px;">YOUR AD</div>`:''}
-        <button class="card-fav ${l.favs?'active':''}" onclick="toggleFav(event,${l.id})">${l.favs?'❤️':'🤍'}</button>
+        <img src="${img}" alt="${esc(l.title)}" loading="lazy" onerror="this.src='${NO_IMG}'">
+        <div class="card-badge ${bc}">${l.condition}</div>
+        ${isOwn ? '<div class="card-own-badge">YOUR AD</div>' : ''}
+        ${l.negotiable ? '<div class="card-neg-badge">Negotiable</div>' : ''}
+        <button class="card-fav ${l.favs ? 'active' : ''}" onclick="toggleFav(event,${l.id})" title="Wishlist">${l.favs ? '❤️' : '🤍'}</button>
       </div>
       <div class="card-body">
-        <div class="card-price">₹${l.price.toLocaleString('en-IN')}</div>
+        <div class="card-price">₹${l.price.toLocaleString('en-IN')}${l.negotiable ? '<span class="neg-tag">Neg.</span>' : ''}</div>
         <div class="card-title">${esc(l.title)}</div>
-        <div class="card-meta"><span>📍 ${esc(l.location)}</span><span class="dot"></span><span>${timeAgo(l.postedAt)}</span></div>
+        <div class="card-meta">
+          <span>📍 ${esc(l.location)}</span>
+          <span class="dot"></span>
+          <span>${timeAgo(l.postedAt)}</span>
+          <span class="card-views"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>${l.views || 0}</span>
+        </div>
       </div>
     </div>`;
   }).join('');
 }
 
-// ======= FILTERS =======
+// ============================================================
+// FILTERS
+// ============================================================
 function filterCat(cat, el) {
-  activeCategory=cat;
-  document.querySelectorAll('.cat-pill').forEach(p=>p.classList.remove('active'));
+  activeCategory = cat;
+  document.querySelectorAll('.cat-pill').forEach(p => p.classList.remove('active'));
   el.classList.add('active');
   renderListings();
 }
+
 function filterCondition(c, el) {
-  activeCondition=c;
-  document.querySelectorAll('.filter-chip').forEach(f=>f.classList.remove('active'));
+  activeCondition = c;
+  document.querySelectorAll('.filter-chip').forEach(f => f.classList.remove('active'));
   el.classList.add('active');
   renderListings();
 }
+
 function toggleFav(e, id) {
   e.stopPropagation();
-  const l=listings.find(x=>x.id===id);
-  if(l) { l.favs=!l.favs; showToast(l.favs?'❤️ Wishlist mein add kiya':'Wishlist se hataya'); renderListings(); }
+  const l = listings.find(x => x.id === id);
+  if (l) { l.favs = !l.favs; showToast(l.favs ? '❤️ Wishlist mein add kiya' : '🤍 Wishlist se hataya'); renderListings(); }
 }
 
-// ======= DETAIL MODAL =======
+// ============================================================
+// DETAIL MODAL
+// ============================================================
 function openDetail(id) {
-  const l = listings.find(x=>x.id===id);
+  const l = listings.find(x => x.id === id);
   if (!l) return;
-  const imgs = (l.imgs&&l.imgs.length) ? l.imgs : [DEMO_PH[l.category]||DEMO_PH.Other];
-  const thumbs = imgs.length>1
-    ? `<div class="detail-thumbs">${imgs.map((img,i)=>`<img class="detail-thumb ${i===0?'active':''}" src="${img}" onclick="switchImg(this,'${img}')">`).join('')}</div>`
+
+  sbIncrementView(id);
+
+  const imgs = (l.imgs && l.imgs.length) ? l.imgs : [DEMO_PH[l.category] || DEMO_PH.Other];
+  const thumbs = imgs.length > 1
+    ? `<div class="detail-thumbs">${imgs.map((img, i) => `<img class="detail-thumb ${i === 0 ? 'active' : ''}" src="${img}" onclick="switchDetailImg(this,'${esc(img)}')" loading="lazy">`).join('')}</div>`
     : '';
-  const isOwn = currentUser && l.ownerUid===currentUser.uid;
+
+  const isOwn = currentUser && l.ownerUid === currentUser.uid;
   const isAdmin = currentUser?.isAdmin;
 
-  // ✅ CONTACT SECTION — only for logged-in users
   let contactSection = '';
   if (currentUser) {
-    // Logged in → show contact details
     contactSection = `
       <div class="contact-reveal">
         <div style="font-size:1.5rem;">📞</div>
-        <div>
+        <div style="flex:1;">
           <div style="font-size:.8rem;color:var(--muted);margin-bottom:.2rem;">Seller ka Number</div>
-          <div class="contact-phone">${esc(l.phone||'Number nahi diya')}</div>
+          <div class="contact-phone">${esc(l.phone || 'Number nahi diya')}</div>
         </div>
-        ${l.phone && l.phone!=='Not provided' ? `<a href="tel:${esc(l.phone)}" style="margin-left:auto;" onclick="event.stopPropagation()"><button class="contact-btn" style="width:auto;padding:.6rem 1.2rem;margin:0;">📲 Call</button></a>` : ''}
+        ${l.phone && l.phone !== 'Not provided' ? `<a href="tel:${esc(l.phone)}" onclick="event.stopPropagation()"><button class="contact-btn" style="width:auto;padding:.55rem 1rem;margin:0;font-size:.85rem;">📲 Call</button></a>` : ''}
       </div>
-      <a href="https://wa.me/${(l.phone||'').replace(/[^0-9]/g,'')}" target="_blank" onclick="event.stopPropagation()">
+      ${l.phone && l.phone !== 'Not provided' ? `
+      <a href="https://wa.me/${(l.phone || '').replace(/[^0-9]/g, '')}" target="_blank" onclick="event.stopPropagation()">
         <button class="contact-btn" style="background:#25D366;">💬 WhatsApp par Message Karo</button>
-      </a>
+      </a>` : ''}
     `;
   } else {
-    // Not logged in → show gate
     contactSection = `
       <div class="login-gate">
-        <p>🔒 Seller ka number aur contact details dekhne ke liye <strong>login karna zaroori hai</strong></p>
-        <button class="submit-btn" onclick="hideModal('detailModal');openAuthModal()">🔑 Login / Register karke dekhein</button>
+        <p>🔒 Seller ka number dekhne ke liye <strong>login karna zaroori hai</strong></p>
+        <button class="submit-btn" onclick="hideModal('detailModal');openAuthModal()">🔑 Login / Register</button>
       </div>
     `;
   }
 
+  // Related listings
+  const related = listings.filter(x => x.id !== id && x.category === l.category).slice(0, 4);
+  const relatedHTML = related.length ? `
+    <div class="related-section">
+      <div class="related-title">Similar Listings</div>
+      <div class="related-grid">
+        ${related.map(r => {
+          const ri = (r.imgs && r.imgs[0]) ? r.imgs[0] : NO_IMG;
+          return `<div class="related-card" onclick="hideModal('detailModal');setTimeout(()=>openDetail(${r.id}),100)">
+            <img src="${ri}" loading="lazy" onerror="this.src='${NO_IMG}'">
+            <div class="related-card-body">
+              <div class="related-card-price">₹${r.price.toLocaleString('en-IN')}</div>
+              <div class="related-card-title">${esc(r.title)}</div>
+            </div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>` : '';
+
   document.getElementById('detailContent').innerHTML = `
     <div class="modal-header">
-      <div class="modal-title">${CAT_ICON[l.category]||'📦'} ${esc(l.category)}</div>
+      <div class="modal-title">${CAT_ICON[l.category] || '📦'} ${esc(l.category)}</div>
       <div style="display:flex;gap:.5rem;align-items:center;">
-        ${(isOwn||isAdmin)?`<button class="close-btn" style="background:var(--accent2);border-color:var(--accent2);color:#fff;width:auto;padding:0 .75rem;font-size:.85rem;" onclick="deleteAd(${l.id})">🗑 Delete</button>`:''}
+        ${(isOwn || isAdmin) ? `<button class="close-btn" style="background:rgba(232,71,29,0.15);border-color:var(--accent2);color:var(--accent2);width:auto;padding:0 .75rem;font-size:.82rem;" onclick="deleteAd(${l.id})">🗑 Delete</button>` : ''}
         <button class="close-btn" onclick="hideModal('detailModal')">✕</button>
       </div>
     </div>
-    <div class="detail-imgs">
-      <img class="detail-main-img" id="mainImg" src="${imgs[0]}" alt="${esc(l.title)}">
+
+    <div class="detail-img-gallery">
+      <img class="detail-main-img" id="mainDetailImg" src="${imgs[0]}" alt="${esc(l.title)}" onclick="openZoom(this.src)">
       ${thumbs}
     </div>
-    <div class="detail-price">₹${l.price.toLocaleString('en-IN')}</div>
+
+    <div class="detail-price">
+      ₹${l.price.toLocaleString('en-IN')}
+      ${l.negotiable ? '<span class="neg-badge">Negotiable</span>' : ''}
+    </div>
     <div class="detail-title">${esc(l.title)}</div>
+
     <div class="detail-meta">
       <span class="detail-tag">📍 ${esc(l.location)}</span>
       <span class="detail-tag">🏷️ ${l.condition}</span>
       <span class="detail-tag">🕒 ${timeAgo(l.postedAt)}</span>
-      ${imgs.length>1?`<span class="detail-tag">📷 ${imgs.length} photos</span>`:''}
+      <span class="detail-tag">👁 ${l.views || 0} views</span>
+      ${imgs.length > 1 ? `<span class="detail-tag">📷 ${imgs.length} photos</span>` : ''}
     </div>
-    <div class="detail-desc">${esc(l.desc||'No description provided.')}</div>
+
+    <div class="detail-desc">${esc(l.desc || 'No description provided.')}</div>
+
     <div class="detail-seller">
-      <div class="seller-avatar">${(l.seller||'?')[0].toUpperCase()}</div>
+      <div class="seller-avatar">${(l.seller || '?')[0].toUpperCase()}</div>
       <div>
         <div class="seller-name">${esc(l.seller)}</div>
-        <div class="seller-sub">${isOwn?'✅ Aapki listing':'Verified Seller'}</div>
+        <div class="seller-sub">${isOwn ? '✅ Aapki listing' : '🟢 Active Seller'}</div>
       </div>
     </div>
+
+    <div class="action-row">
+      <button class="action-btn" onclick="shareListing(${l.id})">🔗 Share</button>
+      <button class="action-btn" onclick="copyLink(${l.id})">📋 Copy Link</button>
+      <button class="action-btn ${l.favs ? 'action-btn-fav' : ''}" onclick="toggleFavDetail(${l.id},this)">${l.favs ? '❤️ Saved' : '🤍 Save'}</button>
+    </div>
+
     ${contactSection}
+    ${relatedHTML}
   `;
+
   showModal('detailModal');
 }
-function switchImg(el, src) {
-  document.getElementById('mainImg').src=src;
-  document.querySelectorAll('.detail-thumb').forEach(t=>t.classList.remove('active'));
+
+function switchDetailImg(el, src) {
+  document.getElementById('mainDetailImg').src = src;
+  document.querySelectorAll('.detail-thumb').forEach(t => t.classList.remove('active'));
   el.classList.add('active');
 }
 
-// ======= DELETE AD =======
+function toggleFavDetail(id, btn) {
+  const l = listings.find(x => x.id === id);
+  if (l) {
+    l.favs = !l.favs;
+    btn.textContent = l.favs ? '❤️ Saved' : '🤍 Save';
+    showToast(l.favs ? '❤️ Wishlist mein add kiya' : '🤍 Wishlist se hataya');
+    renderListings();
+  }
+}
+
+function shareListing(id) {
+  const l = listings.find(x => x.id === id);
+  if (!l) return;
+  const text = `${l.title} — ₹${l.price.toLocaleString('en-IN')} | ${l.location}\n📱 BazaarNow par dekho!`;
+  if (navigator.share) {
+    navigator.share({ title: l.title, text, url: window.location.href }).catch(() => {});
+  } else {
+    copyToClipboard(text);
+    showToast('📋 Share text copy ho gaya!');
+  }
+}
+
+function copyLink(id) {
+  copyToClipboard(window.location.href + '#listing-' + id);
+  showToast('🔗 Link copy ho gaya!');
+}
+
+function copyToClipboard(text) {
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(text).catch(() => {});
+  } else {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+  }
+}
+
+// ============================================================
+// IMAGE ZOOM
+// ============================================================
+function openZoom(src) {
+  document.getElementById('zoomImg').src = src;
+  document.getElementById('zoomOverlay').classList.add('open');
+}
+
+function closeZoom() {
+  document.getElementById('zoomOverlay').classList.remove('open');
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    closeZoom();
+    ['detailModal','sellModal','authModal','profileModal'].forEach(hideModal);
+  }
+});
+
+// ============================================================
+// DELETE AD
+// ============================================================
 async function deleteAd(id) {
   if (!confirm('Yeh listing delete karna chahte ho?')) return;
   await sbDeleteListing(id);
-  listings=listings.filter(l=>l.id!==id);
+  listings = listings.filter(l => l.id !== id);
   hideModal('detailModal');
   renderListings();
+  updateStats();
   showToast('🗑️ Ad delete ho gaya');
 }
 
-// ======= ADMIN PANEL =======
+// ============================================================
+// MY PROFILE MODAL
+// ============================================================
+function openProfileModal() {
+  if (!currentUser) { openAuthModal(); return; }
+  const myListings = listings.filter(l => l.ownerUid === currentUser.uid);
+  const favListings = listings.filter(l => l.favs);
+
+  document.getElementById('profileContent').innerHTML = `
+    <div class="modal-header">
+      <div class="modal-title">👤 My Profile</div>
+      <button class="close-btn" onclick="hideModal('profileModal')">✕</button>
+    </div>
+
+    <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1.5rem;padding-bottom:1.25rem;border-bottom:1px solid var(--border);">
+      <div class="seller-avatar" style="width:56px;height:56px;font-size:1.3rem;">${(currentUser.name || 'U')[0].toUpperCase()}</div>
+      <div>
+        <div style="font-weight:700;font-size:1.1rem;">${esc(currentUser.name)}</div>
+        <div style="color:var(--muted);font-size:.85rem;">${esc(currentUser.email)}</div>
+        ${currentUser.isAdmin ? '<div style="display:inline-block;background:var(--accent2);color:#fff;font-size:.7rem;font-weight:700;padding:.15rem .5rem;border-radius:4px;margin-top:.3rem;">ADMIN</div>' : ''}
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem;margin-bottom:1.5rem;">
+      <div class="profile-stat">
+        <div class="profile-stat-num">${myListings.length}</div>
+        <div class="profile-stat-label">Active Listings</div>
+      </div>
+      <div class="profile-stat">
+        <div class="profile-stat-num">${favListings.length}</div>
+        <div class="profile-stat-label">Saved Items</div>
+      </div>
+    </div>
+
+    ${myListings.length ? `
+    <div class="my-listings-section">
+      <div class="related-title">My Listings</div>
+      ${myListings.map(l => {
+        const img = (l.imgs && l.imgs[0]) ? l.imgs[0] : NO_IMG;
+        return `<div class="my-listing-item" onclick="hideModal('profileModal');setTimeout(()=>openDetail(${l.id}),100)">
+          <img class="my-listing-img" src="${img}" onerror="this.src='${NO_IMG}'" loading="lazy">
+          <div class="my-listing-info">
+            <div class="my-listing-title">${esc(l.title)}</div>
+            <div class="my-listing-sub">₹${l.price.toLocaleString('en-IN')} · ${esc(l.location)} · ${l.views || 0} views</div>
+          </div>
+          <button class="small-btn small-btn-danger" onclick="event.stopPropagation();hideModal('profileModal');deleteAd(${l.id})" style="flex-shrink:0;">🗑</button>
+        </div>`;
+      }).join('')}
+    </div>` : '<p style="text-align:center;color:var(--muted);padding:1rem 0;">Aapne abhi koi listing post nahi ki.</p>'}
+
+    ${favListings.length ? `
+    <div class="my-listings-section" style="margin-top:1rem;">
+      <div class="related-title">❤️ Saved Items</div>
+      ${favListings.map(l => {
+        const img = (l.imgs && l.imgs[0]) ? l.imgs[0] : NO_IMG;
+        return `<div class="my-listing-item" onclick="hideModal('profileModal');setTimeout(()=>openDetail(${l.id}),100)">
+          <img class="my-listing-img" src="${img}" onerror="this.src='${NO_IMG}'" loading="lazy">
+          <div class="my-listing-info">
+            <div class="my-listing-title">${esc(l.title)}</div>
+            <div class="my-listing-sub">₹${l.price.toLocaleString('en-IN')} · ${esc(l.location)}</div>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>` : ''}
+
+    <button class="submit-btn" style="margin-top:1.25rem;background:var(--accent2);color:#fff;" onclick="handleLogout();hideModal('profileModal')">🚪 Logout</button>
+  `;
+
+  showModal('profileModal');
+}
+
+// ============================================================
+// ADMIN PANEL
+// ============================================================
 function renderAdminPanel() {
+  const totalViews = listings.reduce((s, l) => s + (l.views || 0), 0);
+  const cats = [...new Set(listings.map(l => l.category))].length;
+
   document.getElementById('adminStats').innerHTML = `
     <div class="admin-stat"><div class="admin-stat-label">Total Listings</div><div class="admin-stat-value">${listings.length}</div></div>
     <div class="admin-stat"><div class="admin-stat-label">Registered Users</div><div class="admin-stat-value">${users.length}</div></div>
+    <div class="admin-stat"><div class="admin-stat-label">Total Views</div><div class="admin-stat-value">${totalViews.toLocaleString('en-IN')}</div></div>
+    <div class="admin-stat"><div class="admin-stat-label">Categories Active</div><div class="admin-stat-value">${cats}</div></div>
   `;
-  document.getElementById('adminListings').innerHTML = listings.map(l=>`
+
+  document.getElementById('adminListings').innerHTML = listings.map(l => `
     <div class="admin-card">
-      <div style="font-size:1.5rem;">${CAT_ICON[l.category]||'📦'}</div>
+      <div style="font-size:1.5rem;flex-shrink:0;">${CAT_ICON[l.category] || '📦'}</div>
       <div class="admin-card-info">
         <div class="admin-card-title">${esc(l.title)}</div>
-        <div class="admin-card-sub">📍 ${esc(l.location)} · ₹${l.price.toLocaleString('en-IN')} · ${l.condition} · by ${esc(l.seller)} · ${timeAgo(l.postedAt)}</div>
+        <div class="admin-card-sub">📍 ${esc(l.location)} · ₹${l.price.toLocaleString('en-IN')} · ${l.condition} · by ${esc(l.seller)} · ${timeAgo(l.postedAt)} · 👁 ${l.views || 0}</div>
       </div>
       <div class="admin-card-actions">
         <button class="small-btn small-btn-danger" onclick="adminDeleteListing(${l.id})">🗑 Delete</button>
       </div>
     </div>
   `).join('') || '<p style="color:var(--muted);padding:1rem;">Koi listing nahi.</p>';
-  document.getElementById('adminUsers').innerHTML = users.map(u=>`
+
+  document.getElementById('adminUsers').innerHTML = users.map(u => `
     <div class="admin-card">
-      <div class="seller-avatar" style="width:40px;height:40px;font-size:.9rem;">${(u.name||'U')[0].toUpperCase()}</div>
+      <div class="seller-avatar" style="width:40px;height:40px;font-size:.9rem;flex-shrink:0;">${(u.name || 'U')[0].toUpperCase()}</div>
       <div class="admin-card-info">
-        <div class="admin-card-title">${esc(u.name||'Unknown')} ${u.isAdmin?'<span class="admin-badge" style="font-size:.65rem;">ADMIN</span>':''}</div>
-        <div class="admin-card-sub">${esc(u.email||'')} · Joined ${timeAgo(u.createdAt||Date.now())}</div>
+        <div class="admin-card-title">${esc(u.name || 'Unknown')} ${u.isAdmin ? '<span class="admin-badge" style="font-size:.65rem;">ADMIN</span>' : ''}</div>
+        <div class="admin-card-sub">${esc(u.email || '')} · Joined ${timeAgo(u.createdAt || Date.now())}</div>
       </div>
       <div class="admin-card-actions">
-        ${!u.isAdmin?`<button class="small-btn small-btn-danger" onclick="adminDeleteUser('${u.uid}')">🗑 Delete</button>`:'<span style="color:var(--muted);font-size:.8rem;">Protected</span>'}
+        ${!u.isAdmin ? `<button class="small-btn small-btn-danger" onclick="adminDeleteUser('${u.uid}')">🗑 Delete</button>` : '<span style="color:var(--muted);font-size:.8rem;">Protected</span>'}
       </div>
     </div>
   `).join('') || '<p style="color:var(--muted);padding:1rem;">Koi user nahi.</p>';
-  document.getElementById('adminContacts').innerHTML = listings.map(l=>`
+
+  document.getElementById('adminContacts').innerHTML = listings.map(l => `
     <div class="admin-card">
-      <div style="font-size:1.5rem;">${CAT_ICON[l.category]||'📦'}</div>
+      <div style="font-size:1.5rem;flex-shrink:0;">${CAT_ICON[l.category] || '📦'}</div>
       <div class="admin-card-info">
         <div class="admin-card-title">${esc(l.seller)} — ${esc(l.title)}</div>
-        <div class="admin-card-sub">📞 ${esc(l.phone||'Not provided')} · 📍 ${esc(l.location)}</div>
+        <div class="admin-card-sub">📞 ${esc(l.phone || 'Not provided')} · 📍 ${esc(l.location)}</div>
       </div>
       <div class="admin-card-actions">
-        ${l.phone&&l.phone!=='Not provided'?`<a href="tel:${esc(l.phone)}"><button class="small-btn small-btn-primary">📲 Call</button></a>`:''}
+        ${l.phone && l.phone !== 'Not provided' ? `<a href="tel:${esc(l.phone)}"><button class="small-btn small-btn-primary">📲 Call</button></a>` : ''}
       </div>
     </div>
   `).join('') || '<p style="color:var(--muted);padding:1rem;">Koi listing nahi.</p>';
 }
+
 function switchAdminTab(tab, el) {
-  document.querySelectorAll('.admin-tab').forEach(t=>t.classList.remove('active'));
-  if(el) el.classList.add('active');
-  document.querySelectorAll('.admin-section').forEach(s=>s.classList.remove('active'));
-  document.getElementById('admin'+tab[0].toUpperCase()+tab.slice(1)).classList.add('active');
+  document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
+  if (el) el.classList.add('active');
+  document.querySelectorAll('.admin-section').forEach(s => s.classList.remove('active'));
+  const sec = document.getElementById('admin' + tab[0].toUpperCase() + tab.slice(1));
+  if (sec) sec.classList.add('active');
 }
+
 async function adminDeleteListing(id) {
   if (!confirm('Delete?')) return;
   await sbDeleteListing(id);
-  listings=listings.filter(l=>l.id!==id);
-  renderAdminPanel(); renderListings(); showToast('🗑️ Deleted');
+  listings = listings.filter(l => l.id !== id);
+  renderAdminPanel();
+  renderListings();
+  updateStats();
+  showToast('🗑️ Deleted');
 }
+
 async function adminDeleteUser(uid) {
   if (!confirm('Delete this user?')) return;
-  try { await window._supabase.from('users').delete().eq('uid', uid); } catch(e){}
-  users=users.filter(u=>u.uid!==uid);
-  renderAdminPanel(); showToast('🗑️ User deleted');
+  try { await _supabase.from('users').delete().eq('uid', uid); } catch(e) {}
+  users = users.filter(u => u.uid !== uid);
+  renderAdminPanel();
+  showToast('🗑️ User deleted');
 }
 </script>
 </body>
