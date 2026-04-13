@@ -652,29 +652,44 @@ function clearOtpInputs() {
 
 async function sendEmailOTP() {
   const email = document.getElementById('authEmail').value.trim().toLowerCase();
+
   if (!email) {
     showToast('⚠️ Please enter email', true);
     return;
   }
 
+  const btn = document.getElementById('sendOtpBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Sending...';
+
   try {
     const { error } = await window._supabase.auth.signInWithOtp({
       email: email,
       options: {
-        // Is line ko check karein, ye naye account banane mein madad karega
-        shouldCreateUser: true, 
+        emailRedirectTo: window.location.origin, // 🔥 VERY IMPORTANT FIX
+        shouldCreateUser: true
       }
     });
 
     if (error) throw error;
 
-    // UI changes for OTP step
-    document.getElementById('authStep1').style.display='none';
-    document.getElementById('authStep2').style.display='';
-    showToast('📧 OTP bhej diya gaya hai!');
-  } catch(e) {
-    showToast('❌ Error: ' + e.message, true);
+    document.getElementById('otpSentTo').textContent = email;
+    document.getElementById('authStep1').style.display = 'none';
+    document.getElementById('authStep2').style.display = '';
+
+    clearOtpInputs();
+
+    setTimeout(() => {
+      document.querySelectorAll('.otp-input')[0]?.focus();
+    }, 100);
+
+    showToast('📧 OTP bhej diya! Email check karo.');
+  } catch (e) {
+    showToast('❌ ' + e.message, true);
   }
+
+  btn.disabled = false;
+  btn.innerHTML = '📨 OTP Bhejo';
 }
 
     document.getElementById('otpSentTo').textContent = email;
