@@ -1045,11 +1045,6 @@ function removeImg(i) {
 // ============================================================
 // SUBMIT AD
 // ============================================================
-if (!currentUser) {
-  showToast("⚠️ Pehle login karo", true);
-  return;
-}
-
 async function submitAd() {
   if (!currentUser) { showToast('🔒 Login karke ad post karo', true); openAuthModal(); return; }
   const title = document.getElementById('adTitle').value.trim();
