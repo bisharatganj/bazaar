@@ -948,11 +948,18 @@ function initRecaptcha() {
 }
 
 async function sendOTP() {
-  const phone = document.getElementById('phoneInput').value.trim().replace(/\s/g,'');
-  if (phone.length !== 10 || !/^\d{10}$/.test(phone)) {
-    showToast('⚠️ Enter a valid 10-digit phone number', true); return;
+  const email = document.getElementById('emailInput').value.trim();
+
+  const { error } = await _supabase.auth.signInWithOtp({
+    email: email
+  });
+
+  if (error) {
+    showToast("Error sending OTP", true);
+  } else {
+    showToast("📩 OTP sent to email");
   }
-  const fullPhone = '+91' + phone;
+}
 
   // Phone OTP demo mode (Supabase phone auth needs Pro plan)
   // Use email login instead for real auth
