@@ -9,16 +9,38 @@
 <!-- Supabase SDK -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-  // ===== SUPABASE CONFIG =====
-  // Apna Supabase Project URL aur Anon Key yahan daalo
-  // Dashboard → Settings → API se milega
   const SUPABASE_URL = 'https://kytailsminhycuhdfirf.supabase.co';
-  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt5dGFpbHNtaW5oeWN1aGRmaXJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwNjA0MzAsImV4cCI6MjA5MTYzNjQzMH0.tAE0T3BAcr3keR10pJ8f8bib8VcAwzbJvzJGGi7mujA'; // 👈 Yeh replace karo
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt5dGFpbHNtaW5oeWN1aGRmaXJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwNjA0MzAsImV4cCI6MjA5MTYzNjQzMH0.tAE0T3BAcr3keR10pJ8f8bib8VcAwzbJvzJGGi7mujA';
 
   const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
   window._supabase = _supabase;
 
-  // Auth state listener
+  // ===== FIX #1: Handle email confirmation redirect =====
+  // When Supabase redirects back after email confirmation, handle the token
+  async function handleEmailConfirmation() {
+    const hash = window.location.hash;
+    // Supabase puts access_token or error in the URL hash after email confirm
+    if (hash && (hash.includes('access_token') || hash.includes('error'))) {
+      if (hash.includes('error')) {
+        // Show error — link expired
+        const params = new URLSearchParams(hash.replace('#','?').replace('?','&').replace('&#','&'));
+        const errDesc = params.get('error_description') || 'Link expired';
+        setTimeout(() => {
+          showToast('❌ ' + decodeURIComponent(errDesc.replace(/\+/g,' ')), true);
+          // Open login modal so user can login directly
+          openAuthModal('login');
+        }, 800);
+      } else {
+        // Successfully confirmed — Supabase SDK will pick up the session automatically
+        setTimeout(() => {
+          showToast('✅ Email confirmed! You are now logged in.');
+        }, 800);
+      }
+      // Clean up the URL
+      history.replaceState(null, '', window.location.pathname);
+    }
+  }
+
   _supabase.auth.onAuthStateChange((event, session) => {
     window._supabaseSession = session;
     if (typeof window.onAuthChanged === 'function') window.onAuthChanged(session?.user || null);
@@ -44,7 +66,6 @@
   html { scroll-behavior: smooth; }
   body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; overflow-x: hidden; }
 
-  /* NAV */
   nav {
     position: sticky; top: 0; z-index: 100;
     background: rgba(15,14,12,0.92); backdrop-filter: blur(16px);
@@ -68,7 +89,6 @@
   .btn-danger { background: var(--accent2); color: #fff; font-weight: 700; }
   .btn-danger:hover { filter: brightness(1.1); }
 
-  /* USER AVATAR */
   .user-avatar-btn {
     width: 36px; height: 36px; border-radius: 50%;
     background: linear-gradient(135deg, var(--accent), var(--accent2));
@@ -95,7 +115,6 @@
   .user-dropdown-name { font-weight: 600; font-size: .95rem; }
   .user-dropdown-phone { font-size: .78rem; color: var(--muted); }
 
-  /* HERO */
   .hero { padding: 3.5rem 2rem 2.5rem; text-align: center; position: relative; overflow: hidden; }
   .hero::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse 80% 60% at 50% -10%, rgba(245,166,35,0.12), transparent); pointer-events: none; }
   .hero h1 { font-family: 'Syne', sans-serif; font-size: clamp(2.2rem, 5vw, 3.8rem); font-weight: 800; line-height: 1.1; letter-spacing: -1px; margin-bottom: .75rem; }
@@ -105,12 +124,11 @@
   .cat-pill { background: var(--surface2); border: 1px solid var(--border); border-radius: 50px; padding: .4rem .9rem; font-size: .85rem; cursor: pointer; transition: all .2s; color: var(--muted); }
   .cat-pill:hover, .cat-pill.active { background: var(--accent); color: #000; border-color: var(--accent); font-weight: 600; }
 
-  /* FAB */
-  .sell-fab { position: fixed; bottom: 2rem; right: 2rem; z-index: 200; background: var(--accent2); color: #fff; border: none; border-radius: 50px; padding: .85rem 1.6rem; font-family: 'Syne', sans-serif; font-weight: 700; font-size: 1rem; cursor: pointer; box-shadow: 0 8px 32px rgba(232,71,29,0.4); display: flex; align-items: center; gap: .5rem; transition: all .25s; }
+  /* FIX #2: FAB hidden by default, shown only when logged in (controlled by JS) */
+  .sell-fab { position: fixed; bottom: 2rem; right: 2rem; z-index: 200; background: var(--accent2); color: #fff; border: none; border-radius: 50px; padding: .85rem 1.6rem; font-family: 'Syne', sans-serif; font-weight: 700; font-size: 1rem; cursor: pointer; box-shadow: 0 8px 32px rgba(232,71,29,0.4); display: none; align-items: center; gap: .5rem; transition: all .25s; }
   .sell-fab:hover { transform: translateY(-3px); box-shadow: 0 12px 40px rgba(232,71,29,0.5); }
   .sell-fab svg { width: 20px; height: 20px; }
 
-  /* GRID */
   main { max-width: 1280px; margin: 0 auto; padding: 0 2rem 4rem; }
   .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem; }
   .section-title { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 1.3rem; }
@@ -132,7 +150,6 @@
   .card-meta { font-size: .78rem; color: var(--muted); display: flex; gap: .5rem; align-items: center; }
   .card-meta .dot { width: 3px; height: 3px; border-radius: 50%; background: var(--border); }
 
-  /* MODAL */
   .overlay { position: fixed; inset: 0; z-index: 300; background: rgba(0,0,0,0.75); backdrop-filter: blur(6px); display: flex; align-items: center; justify-content: center; padding: 1rem; opacity: 0; pointer-events: none; transition: opacity .25s; }
   .overlay.open { opacity: 1; pointer-events: all; }
   .modal { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; width: 100%; max-width: 560px; max-height: 90vh; overflow-y: auto; padding: 2rem; transform: translateY(20px); transition: transform .3s; }
@@ -142,7 +159,6 @@
   .close-btn { background: var(--surface2); border: 1px solid var(--border); color: var(--text); border-radius: 8px; width: 36px; height: 36px; cursor: pointer; font-size: 1.1rem; display: flex; align-items: center; justify-content: center; transition: all .2s; }
   .close-btn:hover { border-color: var(--accent2); color: var(--accent2); }
 
-  /* FORM */
   .form-group { margin-bottom: 1.1rem; }
   .form-label { display: block; font-size: .85rem; font-weight: 600; margin-bottom: .4rem; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; }
   .form-input, .form-select, .form-textarea { width: 100%; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-family: 'DM Sans', sans-serif; font-size: .95rem; padding: .65rem .9rem; outline: none; transition: border-color .2s; }
@@ -151,13 +167,6 @@
   .form-select option { background: var(--surface); }
   .form-textarea { resize: vertical; min-height: 90px; }
   .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; }
-
-  /* PHONE INPUT */
-  .phone-input-row { display: flex; gap: .5rem; }
-  .phone-country-code { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; color: var(--text); padding: .65rem .75rem; font-size: .95rem; width: 80px; text-align: center; flex-shrink: 0; }
-  .otp-inputs { display: flex; gap: .5rem; justify-content: center; margin: 1rem 0; }
-  .otp-input { width: 48px; height: 56px; background: var(--surface2); border: 2px solid var(--border); border-radius: 10px; color: var(--text); font-size: 1.4rem; font-family: 'Syne', sans-serif; font-weight: 700; text-align: center; outline: none; transition: border-color .2s; }
-  .otp-input:focus { border-color: var(--accent); }
 
   /* AUTH TABS */
   .auth-tabs { display: flex; gap: 0; margin-bottom: 1.5rem; background: var(--surface2); border-radius: 10px; padding: 4px; }
@@ -196,26 +205,22 @@
   .seller-sub { color: var(--muted); font-size: .8rem; }
   .contact-btn { width: 100%; padding: .85rem; background: var(--green); color: #000; border: none; border-radius: 10px; font-family: 'Syne', sans-serif; font-weight: 700; font-size: 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: .5rem; transition: all .25s; }
   .contact-btn:hover { filter: brightness(1.1); transform: translateY(-1px); }
-  .login-gate { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 1rem; text-align: center; color: var(--muted); font-size: .9rem; margin-bottom: .5rem; }
-  .login-gate strong { color: var(--accent); cursor: pointer; }
+  /* FIX #5: Login gate styled clearly */
+  .login-gate { background: var(--surface2); border: 1px solid var(--accent); border-radius: 10px; padding: 1rem; text-align: center; color: var(--muted); font-size: .9rem; margin-bottom: .75rem; }
+  .login-gate strong { color: var(--accent); cursor: pointer; text-decoration: underline; }
 
   /* TOAST */
   .toast { position: fixed; bottom: 5rem; left: 50%; transform: translateX(-50%) translateY(20px); background: var(--green); color: #000; border-radius: 50px; padding: .7rem 1.5rem; font-weight: 700; font-size: .9rem; z-index: 500; opacity: 0; transition: all .3s; pointer-events: none; }
   .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
   .toast.error { background: var(--accent2); color: #fff; }
 
-  /* EMPTY */
   .empty { text-align: center; padding: 4rem 1rem; color: var(--muted); }
   .empty svg { width: 64px; opacity: .3; margin-bottom: 1rem; }
 
-  /* FILTERS */
   .filters-row { display: flex; gap: .5rem; flex-wrap: wrap; margin-bottom: 1.5rem; align-items: center; }
   .filter-chip { background: var(--surface2); border: 1px solid var(--border); border-radius: 50px; padding: .35rem .8rem; font-size: .82rem; cursor: pointer; transition: all .2s; color: var(--muted); white-space: nowrap; }
   .filter-chip:hover, .filter-chip.active { background: var(--accent); color: #000; border-color: var(--accent); font-weight: 600; }
   .sort-select { margin-left: auto; background: var(--surface2); border: 1px solid var(--border); color: var(--text); border-radius: 8px; padding: .35rem .7rem; font-family: 'DM Sans', sans-serif; font-size: .85rem; cursor: pointer; outline: none; }
-
-  /* RECAPTCHA container */
-  #recaptcha-container { margin: .75rem 0; }
 
   /* ADMIN PANEL */
   .admin-page { max-width: 1100px; margin: 0 auto; padding: 2rem; }
@@ -246,13 +251,17 @@
   .small-btn-primary { background: var(--accent); color: #000; }
   .small-btn-primary:hover { filter: brightness(1.1); }
 
-  /* SPINNER */
   .spinner { display: inline-block; width: 20px; height: 20px; border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: spin .7s linear infinite; vertical-align: middle; margin-right: .4rem; }
   @keyframes spin { to { transform: rotate(360deg); } }
 
-  /* DIVIDER */
   .divider { display: flex; align-items: center; gap: 1rem; margin: 1rem 0; color: var(--muted); font-size: .82rem; }
   .divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+  /* Profile card in modal */
+  .profile-card { background: var(--surface2); border: 1px solid var(--border); border-radius: 12px; padding: 1.25rem; margin-bottom: 1rem; display: flex; align-items: center; gap: 1rem; }
+  .profile-avatar-lg { width: 60px; height: 60px; border-radius: 50%; background: linear-gradient(135deg, var(--accent), var(--accent2)); display: flex; align-items: center; justify-content: center; font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.4rem; color: #000; flex-shrink: 0; }
+  .profile-info-name { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 1.1rem; }
+  .profile-info-sub { color: var(--muted); font-size: .85rem; margin-top: .2rem; }
 
   @media (max-width: 600px) {
     nav { padding: 0 1rem; }
@@ -276,12 +285,10 @@
     <input type="text" id="searchInput" placeholder="Search mobiles, cycles, clothes…" oninput="filterListings()">
     <button onclick="filterListings()">Search</button>
   </div>
-  <div class="nav-right" id="navRight">
-    <!-- Rendered by JS based on auth state -->
-  </div>
+  <div class="nav-right" id="navRight"></div>
 </nav>
 
-<!-- HERO (main marketplace) -->
+<!-- HERO -->
 <div id="mainView">
   <section class="hero">
     <h1>Buy & Sell <em>Anything</em><br>Near You</h1>
@@ -331,16 +338,13 @@
       <span class="admin-badge">ADMIN</span>
       <button class="btn btn-ghost" style="margin-left:auto;" onclick="showMainView()">← Back to Marketplace</button>
     </div>
-
     <div class="admin-stat-grid" id="adminStats"></div>
-
     <div class="admin-tabs">
       <button class="admin-tab active" onclick="switchAdminTab('listings', this)">📦 Listings</button>
       <button class="admin-tab" onclick="switchAdminTab('users', this)">👥 Users</button>
       <button class="admin-tab" onclick="switchAdminTab('charges', this)">💰 Charges</button>
       <button class="admin-tab" onclick="switchAdminTab('contacts', this)">📞 Seller Contacts</button>
     </div>
-
     <div class="admin-section active" id="adminListings"></div>
     <div class="admin-section" id="adminUsers"></div>
     <div class="admin-section" id="adminCharges"></div>
@@ -348,7 +352,7 @@
   </div>
 </div>
 
-<!-- FAB -->
+<!-- FIX #2: FAB — display:none by default, shown only when logged in via JS -->
 <button class="sell-fab" id="sellFab" onclick="handleSellClick()">
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
   Sell Now
@@ -362,14 +366,13 @@
       <button class="close-btn" onclick="hideModal('sellModal')">✕</button>
     </div>
     <div class="form-group">
-      <label class="form-label">Photos (up to 6) <span style="font-weight:400;color:var(--green);font-size:.75rem;text-transform:none;">✅ Saved to your device</span></label>
-      <div class="upload-zone" id="uploadZone" ondragover="handleDrag(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event)">
+      <label class="form-label">Photos (up to 6)</label>
+      <div class="upload-zone" id="uploadZone">
         <input type="file" multiple accept="image/*" id="fileInput" onchange="handleFiles(this.files)">
         <div class="upload-icon">🖼️</div>
-        <div class="upload-text"><strong>Click to upload</strong> or drag & drop<br>JPG, PNG, WEBP — auto-compressed &amp; saved to device</div>
+        <div class="upload-text"><strong>Click to upload</strong> or drag & drop</div>
       </div>
       <div class="preview-grid" id="previewGrid"></div>
-      <div id="storageInfo" style="font-size:.75rem;color:var(--muted);margin-top:.4rem;"></div>
     </div>
     <div class="form-group">
       <label class="form-label">Title</label>
@@ -412,97 +415,62 @@
       <input class="form-input" id="adSeller" type="text" placeholder="Full name">
     </div>
     <div class="form-group">
-      <label class="form-label">Phone Number</label>
+      <label class="form-label">Phone Number (shown to buyers after login)</label>
       <input class="form-input" id="adPhone" type="tel" placeholder="+91 XXXXX XXXXX">
     </div>
     <button class="submit-btn" onclick="submitAd()">🚀 Post Ad for Free</button>
   </div>
 </div>
 
-<!-- AUTH MODAL (Login / Register with Firebase Phone OTP) -->
+<!-- ===== FIX #3 & #4: AUTH MODAL — Email only, no phone OTP ===== -->
 <div class="overlay" id="authModal" onclick="handleOverlayClick(event,'authModal')">
   <div class="modal" style="max-width:420px">
-
-    <!-- Step 1: Choose method -->
-    <div id="authStep1">
-      <div class="modal-header">
-        <div class="modal-title" id="authModalTitle">Welcome 👋</div>
-        <button class="close-btn" onclick="hideModal('authModal')">✕</button>
-      </div>
-      <div class="auth-tabs">
-        <button class="auth-tab active" onclick="switchAuthTab('login', this)">Login</button>
-        <button class="auth-tab" onclick="switchAuthTab('register', this)">Create Account</button>
-      </div>
-
-      <!-- Phone OTP login -->
-      <div id="phoneAuthSection">
-        <div class="form-group">
-          <label class="form-label">📱 Phone Number (OTP via SMS)</label>
-          <div class="phone-input-row">
-            <div class="phone-country-code">+91</div>
-            <input class="form-input" id="phoneInput" type="tel" placeholder="98765 43210" maxlength="10">
-          </div>
-        </div>
-        <div id="recaptcha-container"></div>
-        <button class="submit-btn" id="sendOtpBtn" onclick="sendOTP()">
-          📨 Send OTP
-        </button>
-        <div class="divider">or</div>
-        <button class="btn btn-ghost" style="width:100%;justify-content:center;display:flex;" onclick="switchToEmailAuth()">
-          📧 Use Email & Password instead
-        </button>
-      </div>
-
-      <!-- Email auth (fallback) -->
-      <div id="emailAuthSection" style="display:none;">
-        <div class="form-group" id="nameFieldGroup" style="display:none;">
-          <label class="form-label">Full Name</label>
-          <input class="form-input" id="emailName" type="text" placeholder="Your name">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Email</label>
-          <input class="form-input" id="emailInput" type="email" placeholder="you@example.com">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Password</label>
-          <input class="form-input" id="passwordInput" type="password" placeholder="••••••••">
-        </div>
-        <button class="submit-btn" id="emailAuthBtn" onclick="handleEmailAuth()">Login</button>
-        <div class="divider">or</div>
-        <button class="btn btn-ghost" style="width:100%;justify-content:center;display:flex;" onclick="switchToPhoneAuth()">
-          📱 Use Phone OTP instead
-        </button>
-      </div>
+    <div class="modal-header">
+      <div class="modal-title" id="authModalTitle">Welcome 👋</div>
+      <button class="close-btn" onclick="hideModal('authModal')">✕</button>
     </div>
 
-    <!-- Step 2: Enter OTP -->
-    <div id="authStep2" style="display:none;">
-      <div class="modal-header">
-        <div class="modal-title">Enter OTP 🔐</div>
-        <button class="close-btn" onclick="hideModal('authModal')">✕</button>
-      </div>
-      <p style="color:var(--muted);font-size:.9rem;margin-bottom:1rem;">
-        We sent a 6-digit code to <strong id="otpSentTo" style="color:var(--text)"></strong>
-      </p>
-      <div class="otp-inputs" id="otpInputs">
-        <input class="otp-input" maxlength="1" type="text" oninput="otpInputNav(this, 0)">
-        <input class="otp-input" maxlength="1" type="text" oninput="otpInputNav(this, 1)">
-        <input class="otp-input" maxlength="1" type="text" oninput="otpInputNav(this, 2)">
-        <input class="otp-input" maxlength="1" type="text" oninput="otpInputNav(this, 3)">
-        <input class="otp-input" maxlength="1" type="text" oninput="otpInputNav(this, 4)">
-        <input class="otp-input" maxlength="1" type="text" oninput="otpInputNav(this, 5)">
-      </div>
-      <!-- Name field for new users after OTP -->
-      <div id="otpNameField" style="display:none;" class="form-group">
-        <label class="form-label">Your Name (for new account)</label>
-        <input class="form-input" id="otpName" type="text" placeholder="Full name">
-      </div>
-      <button class="submit-btn" id="verifyOtpBtn" onclick="verifyOTP()">✅ Verify & Login</button>
-      <p style="text-align:center;margin-top:.75rem;font-size:.82rem;color:var(--muted)">
-        Didn't receive? <span style="color:var(--accent);cursor:pointer;" onclick="resendOTP()">Resend OTP</span>
-      </p>
+    <!-- FIX #3: Tabs — Login | Register / Sell Now+ -->
+    <div class="auth-tabs">
+      <button class="auth-tab active" onclick="switchAuthTab('login', this)">Login</button>
+      <button class="auth-tab" onclick="switchAuthTab('register', this)">Register / Sell Now+</button>
     </div>
 
+    <!-- FIX #5: Name field always shown for register -->
+    <div class="form-group" id="nameFieldGroup" style="display:none;">
+      <label class="form-label">Full Name</label>
+      <input class="form-input" id="emailName" type="text" placeholder="Your name (will appear on your profile)">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Email</label>
+      <input class="form-input" id="emailInput" type="email" placeholder="you@example.com">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Password</label>
+      <input class="form-input" id="passwordInput" type="password" placeholder="••••••••" onkeydown="if(event.key==='Enter') handleEmailAuth()">
+    </div>
+
+    <!-- FIX #1: Show message about email confirmation -->
+    <div id="confirmNotice" style="display:none; background:rgba(245,166,35,0.1); border:1px solid var(--accent); border-radius:8px; padding:.75rem 1rem; font-size:.85rem; color:var(--accent); margin-bottom:.75rem;">
+      ✉️ <strong>Check your email!</strong> We sent a confirmation link. Click it to activate your account, then come back and login.
+    </div>
+
+    <button class="submit-btn" id="emailAuthBtn" onclick="handleEmailAuth()">Login</button>
+
+    <p style="text-align:center;margin-top:.75rem;font-size:.82rem;color:var(--muted);" id="authSwitchHint">
+      Don't have an account? <span style="color:var(--accent);cursor:pointer;" onclick="switchAuthTab('register', null)">Register here</span>
+    </p>
+  </div>
+</div>
+
+<!-- PROFILE MODAL -->
+<div class="overlay" id="profileModal" onclick="handleOverlayClick(event,'profileModal')">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-header">
+      <div class="modal-title">👤 My Profile</div>
+      <button class="close-btn" onclick="hideModal('profileModal')">✕</button>
+    </div>
+    <div id="profileContent"></div>
   </div>
 </div>
 
@@ -515,24 +483,19 @@
 <div class="toast" id="toast"></div>
 
 <script>
-// ======= STORAGE KEYS =======
+// ===== CONFIG =====
 const STORAGE_KEY = 'bazaarnow_listings';
 const STORAGE_IMGS_KEY = 'bazaarnow_imgs_';
 const STORAGE_USERS_KEY = 'bazaarnow_users';
 const STORAGE_CHARGES_KEY = 'bazaarnow_charges';
-const ADMIN_PHONE = '+919528736441'; // Change to your admin phone number
-const ADMIN_EMAIL = 'wazidansari02@gamil.com'; // Change to your admin email
+const ADMIN_EMAIL = 'wazidansari02@gmail.com';
 
-// ======= CATEGORY ICONS =======
 const CAT_ICON = {Mobiles:'📱',Cycles:'🚲',Clothes:'👕',Electronics:'💻',Furniture:'🛋️',Books:'📚',Vehicles:'🚗',Other:'📦'};
 
-// ======= CHARGES CONFIG =======
+// ===== CHARGES =====
 let charges = loadCharges();
 function loadCharges() {
-  try {
-    const raw = localStorage.getItem(STORAGE_CHARGES_KEY);
-    if (raw) return JSON.parse(raw);
-  } catch(e){}
+  try { const r = localStorage.getItem(STORAGE_CHARGES_KEY); if (r) return JSON.parse(r); } catch(e){}
   return { listingFeePercent: 5, featuredBoost: 99, premiumPlan: 299 };
 }
 function saveCharges() {
@@ -540,13 +503,10 @@ function saveCharges() {
   sbSaveCharges(charges);
 }
 
-// ======= USERS =======
+// ===== USERS =====
 let users = loadUsers();
 function loadUsers() {
-  try {
-    const raw = localStorage.getItem(STORAGE_USERS_KEY);
-    if (raw) return JSON.parse(raw);
-  } catch(e){}
+  try { const r = localStorage.getItem(STORAGE_USERS_KEY); if (r) return JSON.parse(r); } catch(e){}
   return [];
 }
 function saveUsers() {
@@ -561,24 +521,22 @@ function upsertUser(uid, data) {
 }
 function deleteUserById(uid) {
   users = users.filter(u => u.uid !== uid);
-  // Also delete their listings
   listings = listings.filter(l => l.ownerUid !== uid);
   saveListings(listings);
   saveUsers();
 }
 
-// ======= AUTH STATE =======
-let currentUser = null; // { uid, name, phone/email, isAdmin }
+// ===== AUTH STATE =====
+let currentUser = null;
 
 window.onAuthChanged = function(sbUser) {
   if (sbUser) {
     const email = sbUser.email || '';
-    const phone = sbUser.phone || sbUser.user_metadata?.phone || '';
-    const name = sbUser.user_metadata?.name || sbUser.user_metadata?.full_name || email;
-    const isAdmin = (email === ADMIN_EMAIL || phone === ADMIN_PHONE);
-    currentUser = { uid: sbUser.id, name, phone, email, isAdmin };
-    upsertUser(sbUser.id, { name, phone, email, isAdmin });
-    sbUpsertUser(sbUser.id, { name, phone, email, isAdmin });
+    const name = sbUser.user_metadata?.name || sbUser.user_metadata?.full_name || email.split('@')[0];
+    const isAdmin = (email === ADMIN_EMAIL);
+    currentUser = { uid: sbUser.id, name, email, isAdmin };
+    upsertUser(sbUser.id, { name, email, isAdmin });
+    sbUpsertUser(sbUser.id, { name, email, isAdmin });
   } else {
     currentUser = null;
   }
@@ -586,18 +544,16 @@ window.onAuthChanged = function(sbUser) {
   renderListings();
 };
 
-// ======= SUPABASE HELPERS =======
+// ===== SUPABASE HELPERS =====
 function isSupabaseReady() {
   return !!window._supabase && SUPABASE_ANON_KEY !== 'YOUR_ANON_KEY_HERE';
 }
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt5dGFpbHNtaW5oeWN1aGRmaXJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwNjA0MzAsImV4cCI6MjA5MTYzNjQzMH0.tAE0T3BAcr3keR10pJ8f8bib8VcAwzbJvzJGGi7mujA';
 
 async function sbLoadListings() {
   if (!isSupabaseReady()) return null;
   try {
-    const { data, error } = await window._supabase
-      .from('listings')
-      .select('*')
-      .order('posted_at', { ascending: false });
+    const { data, error } = await window._supabase.from('listings').select('*').order('posted_at', { ascending: false });
     if (error) throw error;
     return data.map(r => ({
       id: r.id, title: r.title, category: r.category, condition: r.condition,
@@ -608,7 +564,6 @@ async function sbLoadListings() {
     }));
   } catch(e) { console.warn('Supabase load listings error:', e); return null; }
 }
-
 async function sbSaveListing(listing) {
   if (!isSupabaseReady()) return false;
   try {
@@ -625,43 +580,36 @@ async function sbSaveListing(listing) {
     return true;
   } catch(e) { console.warn('Supabase save listing error:', e); return false; }
 }
-
 async function sbDeleteListing(id) {
   if (!isSupabaseReady()) return;
-  try { await window._supabase.from('listings').delete().eq('id', id); }
-  catch(e) { console.warn('Supabase delete listing error:', e); }
+  try { await window._supabase.from('listings').delete().eq('id', id); } catch(e) {}
 }
-
 async function sbLoadUsers() {
   if (!isSupabaseReady()) return null;
   try {
     const { data, error } = await window._supabase.from('users').select('*').order('created_at', { ascending: false });
     if (error) throw error;
     return data.map(r => ({
-      uid: r.uid, name: r.name, phone: r.phone || '', email: r.email || '',
+      uid: r.uid, name: r.name, email: r.email || '',
       isAdmin: r.is_admin || false, createdAt: new Date(r.created_at).getTime()
     }));
-  } catch(e) { console.warn('Supabase load users error:', e); return null; }
+  } catch(e) { return null; }
 }
-
 async function sbUpsertUser(uid, data) {
   if (!isSupabaseReady()) return;
   try {
     await window._supabase.from('users').upsert({
-      uid, name: data.name || '', phone: data.phone || '', email: data.email || '',
-      is_admin: data.isAdmin || false
+      uid, name: data.name || '', email: data.email || '', is_admin: data.isAdmin || false
     }, { onConflict: 'uid' });
-  } catch(e) { console.warn('Supabase upsert user error:', e); }
+  } catch(e) {}
 }
-
 async function sbDeleteUser(uid) {
   if (!isSupabaseReady()) return;
   try {
     await window._supabase.from('users').delete().eq('uid', uid);
     await window._supabase.from('listings').delete().eq('owner_uid', uid);
-  } catch(e) { console.warn('Supabase delete user error:', e); }
+  } catch(e) {}
 }
-
 async function sbLoadCharges() {
   if (!isSupabaseReady()) return null;
   try {
@@ -670,14 +618,12 @@ async function sbLoadCharges() {
     return data?.value || null;
   } catch(e) { return null; }
 }
-
 async function sbSaveCharges(c) {
   if (!isSupabaseReady()) return;
-  try { await window._supabase.from('settings').upsert({ key: 'charges', value: c }, { onConflict: 'key' }); }
-  catch(e) { console.warn('Supabase save charges error:', e); }
+  try { await window._supabase.from('settings').upsert({ key: 'charges', value: c }, { onConflict: 'key' }); } catch(e) {}
 }
 
-// ======= DEMO DATA =======
+// ===== DEMO DATA =====
 function makePlaceholderSvg(label, color) {
   const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='400' height='300'><rect width='400' height='300' fill='${color}'/><text x='200' y='130' fill='%23ffffff99' text-anchor='middle' font-size='48'>${encodeURIComponent(label)}</text><text x='200' y='175' fill='%23ffffff55' text-anchor='middle' font-size='14' font-family='sans-serif'>No Photo</text></svg>`;
   return 'data:image/svg+xml,' + svg;
@@ -692,7 +638,6 @@ const DEMO_PLACEHOLDERS = {
   Vehicles: makePlaceholderSvg('🚗','%23101820'),
   Other: makePlaceholderSvg('📦','%231e1e1e'),
 };
-
 const DEFAULT_LISTINGS = [
   {id:1,title:'iPhone 12 Pro — 128GB Pacific Blue',category:'Mobiles',condition:'Like New',price:28000,location:'Gurugram',desc:'Bought 1.5 years ago. Battery health 89%. All original accessories included.',seller:'Rahul K.',phone:'+91 98765 43210',favs:false,time:'2h ago',postedAt:Date.now()-7200000,userUploaded:false,ownerUid:'demo1'},
   {id:2,title:'Trek MTB Cycle 21-Speed',category:'Cycles',condition:'Good',price:6500,location:'Noida',desc:'Used for 2 years. Gear shifters work fine. New tyres fitted 3 months back.',seller:'Priya S.',phone:'+91 91234 56789',favs:false,time:'5h ago',postedAt:Date.now()-18000000,userUploaded:false,ownerUid:'demo2'},
@@ -704,76 +649,60 @@ const DEFAULT_LISTINGS = [
   {id:8,title:'Samsung Galaxy Buds Pro',category:'Mobiles',condition:'Like New',price:4500,location:'Noida',desc:'Used for 3 months. ANC works great. Case and cable included.',seller:'Priya S.',phone:'+91 91234 56789',favs:false,time:'6d ago',postedAt:Date.now()-518400000,userUploaded:false,ownerUid:'demo2'},
 ];
 
-// ======= PERSISTENCE (Supabase + localStorage fallback) =======
+// ===== PERSISTENCE =====
 function saveListings(arr) {
-  try {
-    const meta = arr.map(l => { const {imgs, ...rest} = l; return rest; });
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(meta));
-  } catch(e) {}
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(arr.map(l => { const {imgs,...r}=l; return r; }))); } catch(e){}
 }
 function saveImages(id, imgs) {
-  try { localStorage.setItem(STORAGE_IMGS_KEY + id, JSON.stringify(imgs)); }
-  catch(e) {}
+  try { localStorage.setItem(STORAGE_IMGS_KEY + id, JSON.stringify(imgs)); } catch(e){}
 }
 function loadImages(id, category) {
-  try {
-    const raw = localStorage.getItem(STORAGE_IMGS_KEY + id);
-    if (raw) return JSON.parse(raw);
-  } catch(e){}
+  try { const r = localStorage.getItem(STORAGE_IMGS_KEY + id); if (r) return JSON.parse(r); } catch(e){}
   return [DEMO_PLACEHOLDERS[category] || DEMO_PLACEHOLDERS.Other];
 }
 function loadListings() {
-  // Returns local data first; Supabase loads asynchronously after init
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) {
-      const meta = JSON.parse(raw);
-      return meta.map(l => ({ ...l, imgs: loadImages(l.id, l.category) }));
-    }
+    if (raw) { const m = JSON.parse(raw); return m.map(l => ({ ...l, imgs: loadImages(l.id, l.category) })); }
   } catch(e){}
   const seeded = DEFAULT_LISTINGS.map(l => ({ ...l, imgs: [DEMO_PLACEHOLDERS[l.category]||DEMO_PLACEHOLDERS.Other] }));
   saveListings(seeded);
   return seeded;
 }
-function deleteListingStorage(id) {
-  try { localStorage.removeItem(STORAGE_IMGS_KEY + id); } catch(e){}
-}
 async function refreshListingsFromSupabase() {
   const sbData = await sbLoadListings();
-  if (sbData && sbData.length > 0) {
-    // Merge: Supabase data wins, keep local demo data if Supabase is empty
-    listings = sbData;
-    saveListings(listings);
-    renderListings();
-  }
+  if (sbData && sbData.length > 0) { listings = sbData; saveListings(listings); renderListings(); }
 }
 
-// ======= STATE =======
+// ===== STATE =====
 let listings = loadListings();
 let uploadedFiles = [];
 let activeCategory = 'All';
 let activeCondition = 'All';
 let currentSort = 'newest';
 
-// ======= TIME HELPER =======
+// ===== HELPERS =====
 function timeAgo(ts) {
-  const diff = Date.now() - ts;
-  const m = Math.floor(diff/60000);
+  const d = Date.now() - ts, m = Math.floor(d/60000);
   if (m < 1) return 'Just now';
   if (m < 60) return `${m}m ago`;
   const h = Math.floor(m/60);
   if (h < 24) return `${h}h ago`;
   return `${Math.floor(h/24)}d ago`;
 }
-
 function escHtml(s) {
-  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
-// ======= NAV RENDER =======
+// ===== FIX #2 & #5: NAV — FAB only shown when logged in =====
 function renderNav() {
   const nav = document.getElementById('navRight');
+  const fab = document.getElementById('sellFab');
+
   if (currentUser) {
+    // Show FAB for logged-in users
+    fab.style.display = 'flex';
+
     const initials = (currentUser.name||'U')[0].toUpperCase();
     nav.innerHTML = `
       <div style="position:relative;" id="userMenuWrap">
@@ -781,8 +710,9 @@ function renderNav() {
         <div class="user-dropdown" id="userDropdown">
           <div class="user-dropdown-info">
             <div class="user-dropdown-name">${escHtml(currentUser.name)}</div>
-            <div class="user-dropdown-phone">${escHtml(currentUser.phone || currentUser.email || '')}</div>
+            <div class="user-dropdown-phone">${escHtml(currentUser.email || '')}</div>
           </div>
+          <div class="user-dropdown-item" onclick="openProfileModal()">👤 My Profile</div>
           <div class="user-dropdown-item" onclick="showMainView()">🏠 Marketplace</div>
           ${currentUser.isAdmin ? `<div class="user-dropdown-item" onclick="showAdminPanel()">⚙️ Admin Panel</div>` : ''}
           <div class="user-dropdown-item" style="color:var(--accent2);" onclick="handleLogout()">🚪 Logout</div>
@@ -791,9 +721,13 @@ function renderNav() {
       <button class="btn btn-primary" onclick="handleSellClick()">+ Sell</button>
     `;
   } else {
+    // Hide FAB when not logged in
+    fab.style.display = 'none';
+
+    // FIX #3: Register button says "Register / Sell Now+"
     nav.innerHTML = `
       <button class="btn btn-ghost" onclick="openAuthModal('login')">Login</button>
-      <button class="btn btn-primary" onclick="openAuthModal('register')">Register</button>
+      <button class="btn btn-primary" onclick="openAuthModal('register')" style="white-space:nowrap;">Register / Sell Now+</button>
     `;
   }
 }
@@ -809,26 +743,61 @@ document.addEventListener('click', (e) => {
   }
 });
 
-// ======= VIEWS =======
+// ===== FIX #6: Profile Modal =====
+function openProfileModal() {
+  const dd = document.getElementById('userDropdown');
+  if (dd) dd.classList.remove('open');
+
+  if (!currentUser) return;
+  const myListings = listings.filter(l => l.ownerUid === currentUser.uid);
+  const initials = (currentUser.name||'U')[0].toUpperCase();
+
+  document.getElementById('profileContent').innerHTML = `
+    <div class="profile-card">
+      <div class="profile-avatar-lg">${initials}</div>
+      <div>
+        <div class="profile-info-name">${escHtml(currentUser.name)}</div>
+        <div class="profile-info-sub">📧 ${escHtml(currentUser.email || 'No email')}</div>
+        ${currentUser.isAdmin ? '<div style="margin-top:.3rem;"><span class="admin-badge" style="font-size:.7rem;">ADMIN</span></div>' : ''}
+      </div>
+    </div>
+    <div style="margin-bottom:1rem;">
+      <div style="font-weight:600;margin-bottom:.6rem;font-family:\'Syne\',sans-serif;">📦 My Listings (${myListings.length})</div>
+      ${myListings.length === 0
+        ? '<p style="color:var(--muted);font-size:.9rem;">You haven\'t posted any ads yet.</p>'
+        : myListings.map(l => `
+          <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:.75rem;margin-bottom:.5rem;display:flex;align-items:center;gap:.75rem;cursor:pointer;" onclick="hideModal('profileModal');openDetail(${l.id})">
+            <div style="font-size:1.4rem;">${CAT_ICON[l.category]||'📦'}</div>
+            <div style="flex:1;">
+              <div style="font-size:.9rem;font-weight:500;">${escHtml(l.title)}</div>
+              <div style="font-size:.78rem;color:var(--muted);">₹${l.price.toLocaleString('en-IN')} · ${escHtml(l.location)} · ${timeAgo(l.postedAt)}</div>
+            </div>
+          </div>
+        `).join('')
+      }
+    </div>
+    <button class="submit-btn" style="background:var(--accent2);" onclick="hideModal('profileModal');handleLogout()">🚪 Logout</button>
+  `;
+  showModal('profileModal');
+}
+
+// ===== VIEWS =====
 function showMainView() {
   document.getElementById('mainView').style.display = '';
   document.getElementById('adminView').style.display = 'none';
-  document.getElementById('sellFab').style.display = '';
   const dd = document.getElementById('userDropdown');
   if (dd) dd.classList.remove('open');
 }
-
 function showAdminPanel() {
   if (!currentUser || !currentUser.isAdmin) { showToast('⛔ Admin access only', true); return; }
   document.getElementById('mainView').style.display = 'none';
   document.getElementById('adminView').style.display = '';
-  document.getElementById('sellFab').style.display = 'none';
   const dd = document.getElementById('userDropdown');
   if (dd) dd.classList.remove('open');
   renderAdminPanel();
 }
 
-// ======= RENDER LISTINGS =======
+// ===== RENDER LISTINGS =====
 function renderListings() {
   let filtered = listings.map(l => ({...l, time: l.postedAt ? timeAgo(l.postedAt) : l.time}));
   const q = document.getElementById('searchInput').value.toLowerCase();
@@ -844,7 +813,7 @@ function renderListings() {
   document.getElementById('gridTitle').textContent = activeCategory === 'All' ? 'All Listings' : activeCategory;
 
   if (!filtered.length) {
-    grid.innerHTML = `<div class="empty" style="grid-column:1/-1"><svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2"><circle cx="32" cy="32" r="28"/><path d="M20 44 L44 20M20 20 L44 44"/></svg><p>No listings found</p></div>`;
+    grid.innerHTML = `<div class="empty" style="grid-column:1/-1"><p>No listings found</p></div>`;
     return;
   }
 
@@ -874,211 +843,137 @@ function renderListings() {
   }).join('');
 }
 
-// ======= FILTERS =======
-function filterCat(cat, el) {
-  activeCategory = cat;
-  document.querySelectorAll('.cat-pill').forEach(p => p.classList.remove('active'));
-  el.classList.add('active');
-  renderListings();
-}
-function filterCondition(cond, el) {
-  activeCondition = cond;
-  document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
-  el.classList.add('active');
-  renderListings();
-}
+// ===== FILTERS =====
+function filterCat(cat, el) { activeCategory = cat; document.querySelectorAll('.cat-pill').forEach(p=>p.classList.remove('active')); el.classList.add('active'); renderListings(); }
+function filterCondition(cond, el) { activeCondition = cond; document.querySelectorAll('.filter-chip').forEach(c=>c.classList.remove('active')); el.classList.add('active'); renderListings(); }
 function filterListings() { renderListings(); }
 function sortListings(val) { currentSort = val; renderListings(); }
 
-// ======= MODAL =======
+// ===== MODAL =====
 function showModal(id) { document.getElementById(id).classList.add('open'); document.body.style.overflow='hidden'; }
 function hideModal(id) { document.getElementById(id).classList.remove('open'); document.body.style.overflow=''; }
 function handleOverlayClick(e, id) { if (e.target.classList.contains('overlay')) hideModal(id); }
 
-// ======= AUTH MODAL =======
+// ===== FIX #3 & #4: AUTH MODAL — email only =====
 let authMode = 'login';
-let confirmationResult = null;
-let recaptchaVerifier = null;
 
 function openAuthModal(mode) {
   authMode = mode;
+  document.getElementById('confirmNotice').style.display = 'none';
+  document.getElementById('emailInput').value = '';
+  document.getElementById('passwordInput').value = '';
+  document.getElementById('emailName').value = '';
   switchAuthTab(mode, null);
-  document.getElementById('authStep1').style.display = '';
-  document.getElementById('authStep2').style.display = 'none';
-  document.getElementById('authModalTitle').textContent = mode === 'login' ? 'Welcome Back 👋' : 'Create Account 🎉';
   showModal('authModal');
-  // Init recaptcha after modal is visible
-  setTimeout(() => initRecaptcha(), 300);
 }
 
 function switchAuthTab(mode, el) {
   authMode = mode;
-  document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
-  if (el) el.classList.add('active');
-  else {
-    document.querySelectorAll('.auth-tab').forEach((t, i) => {
-      if ((i === 0 && mode === 'login') || (i === 1 && mode === 'register')) t.classList.add('active');
-    });
-  }
+  document.querySelectorAll('.auth-tab').forEach((t,i) => {
+    t.classList.remove('active');
+    if ((i===0 && mode==='login') || (i===1 && mode==='register')) t.classList.add('active');
+  });
+  if (el) { document.querySelectorAll('.auth-tab').forEach(t=>t.classList.remove('active')); el.classList.add('active'); }
+
   const nameField = document.getElementById('nameFieldGroup');
   if (nameField) nameField.style.display = mode === 'register' ? '' : 'none';
-  const emailBtn = document.getElementById('emailAuthBtn');
-  if (emailBtn) emailBtn.textContent = mode === 'login' ? 'Login' : 'Create Account';
-  // Show OTP name for register
-  const otpNameDiv = document.getElementById('otpNameField');
-  if (otpNameDiv) otpNameDiv.style.display = mode === 'register' ? '' : 'none';
+  const btn = document.getElementById('emailAuthBtn');
+  if (btn) btn.textContent = mode === 'login' ? 'Login' : 'Create Account & Start Selling';
+  const hint = document.getElementById('authSwitchHint');
+  if (hint) hint.innerHTML = mode === 'login'
+    ? `Don't have an account? <span style="color:var(--accent);cursor:pointer;" onclick="switchAuthTab('register',null)">Register here</span>`
+    : `Already registered? <span style="color:var(--accent);cursor:pointer;" onclick="switchAuthTab('login',null)">Login here</span>`;
+  const title = document.getElementById('authModalTitle');
+  if (title) title.textContent = mode === 'login' ? 'Welcome Back 👋' : 'Create Account 🎉';
+  document.getElementById('confirmNotice').style.display = 'none';
 }
 
-function switchToEmailAuth() {
-  document.getElementById('phoneAuthSection').style.display = 'none';
-  document.getElementById('emailAuthSection').style.display = '';
-  const nameField = document.getElementById('nameFieldGroup');
-  if (nameField) nameField.style.display = authMode === 'register' ? '' : 'none';
-  const emailBtn = document.getElementById('emailAuthBtn');
-  if (emailBtn) emailBtn.textContent = authMode === 'login' ? 'Login' : 'Create Account';
-}
-function switchToPhoneAuth() {
-  document.getElementById('phoneAuthSection').style.display = '';
-  document.getElementById('emailAuthSection').style.display = 'none';
-}
-
-function initRecaptcha() {
-  // Not needed with Supabase — using demo OTP mode
-  // For real SMS OTP, use Supabase Pro plan or Twilio
-}
-
-async function sendOTP() {
-  const phone = document.getElementById('phoneInput').value.trim().replace(/\s/g,'');
-  if (phone.length !== 10 || !/^\d{10}$/.test(phone)) {
-    showToast('⚠️ Enter a valid 10-digit phone number', true); return;
-  }
-  const fullPhone = '+91' + phone;
-
-  // Phone OTP demo mode (Supabase phone auth needs Pro plan)
-  // Use email login instead for real auth
-  showToast('📱 Demo mode: any 6-digit OTP works');
-  document.getElementById('otpSentTo').textContent = fullPhone;
-  document.getElementById('authStep1').style.display = 'none';
-  document.getElementById('authStep2').style.display = '';
-  confirmationResult = { _demoPhone: fullPhone };
-}
-
-function resendOTP() {
-  document.getElementById('authStep2').style.display = 'none';
-  document.getElementById('authStep1').style.display = '';
-  const btn = document.getElementById('sendOtpBtn');
-  btn.disabled = false;
-  btn.innerHTML = '📨 Send OTP';
-  setTimeout(() => initRecaptcha(), 300);
-}
-
-function otpInputNav(input, idx) {
-  input.value = input.value.replace(/\D/,'');
-  if (input.value && idx < 5) {
-    const inputs = document.querySelectorAll('.otp-input');
-    inputs[idx + 1].focus();
-  }
-}
-
-async function verifyOTP() {
-  const inputs = document.querySelectorAll('.otp-input');
-  const code = [...inputs].map(i => i.value).join('');
-  if (code.length !== 6) { showToast('⚠️ Enter all 6 digits', true); return; }
-
-  const btn = document.getElementById('verifyOtpBtn');
-  btn.disabled = true;
-  btn.innerHTML = '<span class="spinner"></span> Verifying…';
-
-  // Demo mode OTP (any 6 digits work)
-  const phone = confirmationResult?._demoPhone || '+91XXXXXXXXXX';
-  const name = document.getElementById('otpName').value.trim() || phone;
-  currentUser = { uid: 'demo_' + Date.now(), name, phone, email: '', isAdmin: (phone === ADMIN_PHONE) };
-  upsertUser(currentUser.uid, { name, phone, email: '', isAdmin: currentUser.isAdmin });
-  sbUpsertUser(currentUser.uid, { name, phone, email: '', isAdmin: currentUser.isAdmin });
-  hideModal('authModal');
-  renderNav();
-  renderListings();
-  showToast('✅ Welcome, ' + name + '!');
-  btn.disabled = false;
-  btn.innerHTML = '✅ Verify & Login';
-}
-
+// ===== FIX #1 & #4: Email Auth with proper confirmation handling =====
 async function handleEmailAuth() {
   const email = document.getElementById('emailInput').value.trim();
   const password = document.getElementById('passwordInput').value;
   const name = document.getElementById('emailName').value.trim();
-  if (!email || !password) { showToast('⚠️ Enter email and password', true); return; }
+
+  if (!email || !password) { showToast('⚠️ Email aur password daalo', true); return; }
+  if (authMode === 'register' && !name) { showToast('⚠️ Apna naam daalo', true); return; }
+  if (password.length < 6) { showToast('⚠️ Password kam se kam 6 characters ka hona chahiye', true); return; }
 
   const btn = document.getElementById('emailAuthBtn');
   btn.disabled = true;
   btn.innerHTML = '<span class="spinner"></span> Please wait…';
 
   if (!isSupabaseReady()) {
-    // Demo mode
-    currentUser = { uid: 'demo_email_' + Date.now(), name: name || email, phone: '', email, isAdmin: (email === ADMIN_EMAIL) };
-    upsertUser(currentUser.uid, { name: currentUser.name, phone: '', email, isAdmin: currentUser.isAdmin });
+    // Demo mode fallback
+    currentUser = { uid: 'demo_' + Date.now(), name: name || email.split('@')[0], email, isAdmin: (email === ADMIN_EMAIL) };
+    upsertUser(currentUser.uid, { name: currentUser.name, email, isAdmin: currentUser.isAdmin });
     hideModal('authModal');
     renderNav();
     renderListings();
     showToast('✅ Welcome, ' + currentUser.name + '! (Demo Mode)');
     btn.disabled = false;
-    btn.innerHTML = authMode === 'login' ? 'Login' : 'Create Account';
+    btn.textContent = authMode === 'login' ? 'Login' : 'Create Account & Start Selling';
     return;
   }
 
   try {
-    let result;
     if (authMode === 'register') {
-      result = await window._supabase.auth.signUp({
-        email, password, options: { data: { name: name || email } }
+      const { data, error } = await window._supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: { name: name },
+          // FIX #1: Set redirect URL to current page so email confirmation works
+          emailRedirectTo: window.location.href.split('#')[0]
+        }
       });
-      if (result.error) throw result.error;
-      showToast('✅ Account created! Please check your email to confirm.');
+      if (error) throw error;
+
+      // Show confirmation notice instead of closing modal
+      btn.disabled = false;
+      btn.textContent = 'Create Account & Start Selling';
+      document.getElementById('confirmNotice').style.display = 'block';
+      showToast('✉️ Confirmation email bheja gaya! Check karo.');
+
     } else {
-      result = await window._supabase.auth.signInWithPassword({ email, password });
-      if (result.error) throw result.error;
-      showToast('✅ Welcome back!');
+      // Login
+      const { data, error } = await window._supabase.auth.signInWithPassword({ email, password });
+      if (error) throw error;
+      hideModal('authModal');
+      showToast('✅ Welcome back, ' + (data.user?.user_metadata?.name || email.split('@')[0]) + '!');
     }
-    hideModal('authModal');
   } catch(e) {
     const msgs = {
-      'Invalid login credentials': 'Wrong email or password',
-      'User already registered': 'Email already in use',
-      'Password should be at least 6 characters': 'Password too weak (min 6 chars)'
+      'Invalid login credentials': '❌ Wrong email ya password',
+      'User already registered': '❌ Email already registered hai — login karo',
+      'Password should be at least 6 characters': '❌ Password kam se kam 6 characters ka hona chahiye',
+      'Email not confirmed': '❌ Pehle email confirm karo — inbox check karo',
+      'signup is disabled': '❌ New signups disabled hain',
     };
-    showToast('❌ ' + (msgs[e.message] || e.message), true);
+    showToast(msgs[e.message] || ('❌ ' + e.message), true);
   }
+
   btn.disabled = false;
-  btn.innerHTML = authMode === 'login' ? 'Login' : 'Create Account';
+  btn.textContent = authMode === 'login' ? 'Login' : 'Create Account & Start Selling';
 }
 
 async function handleLogout() {
-  if (isSupabaseReady()) {
-    await window._supabase.auth.signOut();
-  }
+  if (isSupabaseReady()) await window._supabase.auth.signOut();
   currentUser = null;
   renderNav();
   renderListings();
-  showToast('👋 Logged out');
+  showToast('👋 Logout ho gaye');
   showMainView();
 }
 
-// ======= SELL =======
+// ===== SELL =====
 function handleSellClick() {
-  if (!currentUser) {
-    showToast('🔒 Please login first to post an ad');
-    openAuthModal('login');
-    return;
-  }
-  // Pre-fill seller name
+  if (!currentUser) { openAuthModal('login'); return; }
   const nameField = document.getElementById('adSeller');
   if (nameField && currentUser.name) nameField.value = currentUser.name;
-  const phoneField = document.getElementById('adPhone');
-  if (phoneField && currentUser.phone) phoneField.value = currentUser.phone;
   showModal('sellModal');
 }
 
-// ======= DETAIL =======
+// ===== FIX #5: DETAIL MODAL — phone hidden without login =====
 function openDetail(id) {
   const l = listings.find(x => x.id === id);
   if (!l) return;
@@ -1090,13 +985,23 @@ function openDetail(id) {
   const isAdmin = currentUser && currentUser.isAdmin;
   const feeMultiplier = 1 + (charges.listingFeePercent / 100);
 
-  // Seller contact: only shown to logged-in users
+  // FIX #5: Only show seller phone to logged-in buyers; hide completely if not logged in
   let contactHtml = '';
   if (currentUser) {
-    contactHtml = `<button class="contact-btn" onclick="showToast('📞 ${escHtml(l.phone || 'No number')}')">📞 Contact Seller · ${escHtml(l.phone || 'Not provided')}</button>`;
+    // Logged in — show full contact
+    contactHtml = `
+      <button class="contact-btn" onclick="showToast('📞 Seller: ${escHtml(l.phone || 'No number')}')">
+        📞 ${escHtml(l.phone || 'No number provided')}
+      </button>`;
   } else {
-    contactHtml = `<div class="login-gate">🔒 <strong onclick="openAuthModal('login')">Login</strong> to see seller's phone number & contact them</div>
-    <button class="submit-btn" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);" onclick="openAuthModal('login')">🔑 Login to Contact Seller</button>`;
+    // Not logged in — show lock gate, NO phone visible
+    contactHtml = `
+      <div class="login-gate">
+        🔒 Seller ka phone number dekhne ke liye <strong onclick="hideModal('detailModal');openAuthModal('login')">Login / Register karo</strong>
+      </div>
+      <button class="submit-btn" style="background:var(--accent2);color:#fff;margin-top:0;" onclick="hideModal('detailModal');openAuthModal('login')">
+        🔑 Login to Contact Seller
+      </button>`;
   }
 
   document.getElementById('detailContent').innerHTML = `
@@ -1124,7 +1029,7 @@ function openDetail(id) {
       <div class="seller-avatar">${(l.seller||'?')[0].toUpperCase()}</div>
       <div>
         <div class="seller-name">${escHtml(l.seller)}</div>
-        <div class="seller-sub">${isOwn ? '✅ Your listing' : 'Verified seller'}</div>
+        <div class="seller-sub">${isOwn ? '✅ Your listing' : 'Seller'}</div>
       </div>
     </div>
     ${contactHtml}
@@ -1137,17 +1042,17 @@ function switchImg(el, src) {
   el.classList.add('active');
 }
 
-// ======= DELETE AD =======
+// ===== DELETE =====
 async function deleteAd(id) {
   if (!confirm('Yeh listing delete karna chahte ho?')) return;
   listings = listings.filter(l => l.id !== id);
-  await deleteListingFromSupabase(id);
+  await sbDeleteListing(id);
   hideModal('detailModal');
   renderListings();
   showToast('🗑️ Ad delete ho gaya');
 }
 
-// ======= FAV =======
+// ===== FAV =====
 function toggleFav(e, id) {
   e.stopPropagation();
   const l = listings.find(x => x.id === id);
@@ -1157,47 +1062,26 @@ function toggleFav(e, id) {
   renderListings();
 }
 
-// ======= UPLOAD =======
-function compressImage(dataUrl, maxWidth, quality, cb) {
-  const img = new Image();
-  img.onload = () => {
-    const canvas = document.createElement('canvas');
-    let w = img.width, h = img.height;
-    if (w > maxWidth) { h = Math.round(h * maxWidth / w); w = maxWidth; }
-    canvas.width = w; canvas.height = h;
-    canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-    cb(canvas.toDataURL('image/jpeg', quality));
-  };
-  img.src = dataUrl;
-}
+// ===== UPLOAD =====
 async function handleFiles(files) {
   uploadedFiles = [];
   const previewGrid = document.getElementById('previewGrid');
-  previewGrid.innerHTML = "Uploading... ⏳";
-
+  previewGrid.innerHTML = "⏳ Uploading...";
   for (let file of files) {
-    try {
-      const url = await uploadToCloudinary(file);
-      uploadedFiles.push(url);
-    } catch (e) {
-      console.error("Upload failed", e);
-    }
+    try { const url = await uploadToCloudinary(file); uploadedFiles.push(url); } catch(e) {}
   }
-
   previewGrid.innerHTML = uploadedFiles.map((img, i) => `
-    <div class="preview-item">
-      <img src="${img}">
-      <button onclick="removeImage(${i})">✕</button>
-    </div>
+    <div class="preview-item"><img src="${img}"><button onclick="removeImage(${i})">✕</button></div>
   `).join('');
 }
-function removeFile(i) { uploadedFiles.splice(i, 1); renderPreviews(); showStorageInfo(); }
-function showStorageInfo() {
-  const el = document.getElementById('storageInfo');
-  if (el) el.textContent = '☁️ Data Supabase cloud mein save ho raha hai';
+function removeImage(i) {
+  uploadedFiles.splice(i, 1);
+  document.getElementById('previewGrid').innerHTML = uploadedFiles.map((img,j)=>`
+    <div class="preview-item"><img src="${img}"><button onclick="removeImage(${j})">✕</button></div>
+  `).join('');
 }
 
-// ======= SUBMIT AD (Supabase) =======
+// ===== SUBMIT AD =====
 async function submitAd() {
   if (!currentUser) { showToast('🔒 Login karke ad post karo', true); openAuthModal('login'); return; }
   const title = document.getElementById('adTitle').value.trim();
@@ -1212,7 +1096,7 @@ async function submitAd() {
     showToast('⚠️ Saare required fields bharo', true); return;
   }
   const id = Date.now();
-  const imgs = uploadedFiles.length > 0 ? uploadedFiles : [DEMO_PLACEHOLDERS[category] || DEMO_PLACEHOLDERS.Other];
+  const imgs = uploadedFiles.length > 0 ? [...uploadedFiles] : [DEMO_PLACEHOLDERS[category] || DEMO_PLACEHOLDERS.Other];
   const newListing = {
     id, title, category, condition, price, location,
     desc: desc || 'No description provided.',
@@ -1222,56 +1106,50 @@ async function submitAd() {
     ownerUid: currentUser.uid, ownerEmail: currentUser.email || '',
     listingFee: Math.round(price * (charges.listingFeePercent/100))
   };
-
-  const submitBtn = document.querySelector('#sellModal .submit-btn');
-  if (submitBtn) { submitBtn.disabled = true; submitBtn.innerHTML = '<span class="spinner"></span> Posting…'; }
-
-  await saveListingToSupabase(newListing);
+  const btn = document.querySelector('#sellModal .submit-btn');
+  if (btn) { btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Posting…'; }
+  await sbSaveListing(newListing);
   listings.unshift(newListing);
   hideModal('sellModal');
   resetForm();
   renderListings();
   showToast('🎉 Ad post ho gaya! Ab sab dekh sakte hain!');
-
-  if (submitBtn) { submitBtn.disabled = false; submitBtn.innerHTML = '🚀 Post Ad'; }
+  if (btn) { btn.disabled = false; btn.innerHTML = '🚀 Post Ad for Free'; }
 }
 function resetForm() {
-  ['adTitle','adPrice','adLocation','adDesc','adSeller','adPhone'].forEach(id => document.getElementById(id).value = '');
-  document.getElementById('adCategory').value = '';
-  document.getElementById('adCondition').value = '';
+  ['adTitle','adPrice','adLocation','adDesc','adSeller','adPhone'].forEach(id => { const el = document.getElementById(id); if (el) el.value=''; });
+  const c = document.getElementById('adCategory'); if(c) c.value='';
+  const co = document.getElementById('adCondition'); if(co) co.value='';
   uploadedFiles = [];
-  renderPreviews();
+  const pg = document.getElementById('previewGrid'); if(pg) pg.innerHTML='';
 }
 
-// ======= TOAST =======
-function showToast(msg, isError = false) {
+// ===== TOAST =====
+function showToast(msg, isError=false) {
   const t = document.getElementById('toast');
   t.textContent = msg;
   t.classList.remove('error');
   if (isError) t.classList.add('error');
   t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 3000);
+  setTimeout(() => t.classList.remove('show'), 3200);
 }
 
-// ======= ADMIN PANEL =======
+// ===== ADMIN PANEL =====
 function renderAdminPanel() {
-  // Stats
-  const totalRevenue = listings.reduce((s, l) => s + (l.listingFee || 0), 0);
+  const totalRevenue = listings.reduce((s,l) => s+(l.listingFee||0), 0);
   document.getElementById('adminStats').innerHTML = `
     <div class="admin-stat"><div class="admin-stat-label">Total Listings</div><div class="admin-stat-value">${listings.length}</div></div>
     <div class="admin-stat"><div class="admin-stat-label">Registered Users</div><div class="admin-stat-value">${users.length}</div></div>
     <div class="admin-stat"><div class="admin-stat-label">Revenue Collected</div><div class="admin-stat-value" style="color:var(--green);">₹${totalRevenue.toLocaleString('en-IN')}</div></div>
     <div class="admin-stat"><div class="admin-stat-label">Listing Fee</div><div class="admin-stat-value">${charges.listingFeePercent}%</div></div>
   `;
-
-  // Listings tab
   const feeMultiplier = 1 + (charges.listingFeePercent / 100);
   document.getElementById('adminListings').innerHTML = listings.length ? listings.map(l => `
     <div class="admin-card">
       <div style="font-size:1.5rem;">${CAT_ICON[l.category]||'📦'}</div>
       <div class="admin-card-info">
         <div class="admin-card-title">${escHtml(l.title)}</div>
-        <div class="admin-card-sub">📍 ${escHtml(l.location)} · ₹${Math.round(l.price * feeMultiplier).toLocaleString('en-IN')} · ${l.condition} · by ${escHtml(l.seller)} · ${l.postedAt ? timeAgo(l.postedAt) : l.time}</div>
+        <div class="admin-card-sub">📍 ${escHtml(l.location)} · ₹${Math.round(l.price*feeMultiplier).toLocaleString('en-IN')} · ${l.condition} · by ${escHtml(l.seller)} · ${timeAgo(l.postedAt)}</div>
       </div>
       <div class="admin-card-actions">
         <button class="small-btn small-btn-danger" onclick="adminDeleteListing(${l.id})">🗑 Delete</button>
@@ -1279,13 +1157,12 @@ function renderAdminPanel() {
     </div>
   `).join('') : '<p style="color:var(--muted);padding:1rem;">No listings found.</p>';
 
-  // Users tab
   document.getElementById('adminUsers').innerHTML = users.length ? users.map(u => `
     <div class="admin-card">
       <div class="seller-avatar" style="width:40px;height:40px;font-size:.9rem;">${(u.name||'U')[0].toUpperCase()}</div>
       <div class="admin-card-info">
         <div class="admin-card-title">${escHtml(u.name||'Unknown')} ${u.isAdmin ? '<span class="admin-badge" style="font-size:.65rem;">ADMIN</span>' : ''}</div>
-        <div class="admin-card-sub">${escHtml(u.phone||'')} ${u.email ? '· '+escHtml(u.email) : ''} · Joined ${timeAgo(u.createdAt||Date.now())}</div>
+        <div class="admin-card-sub">${u.email ? escHtml(u.email) : ''} · Joined ${timeAgo(u.createdAt||Date.now())}</div>
       </div>
       <div class="admin-card-actions">
         ${!u.isAdmin ? `<button class="small-btn small-btn-danger" onclick="adminDeleteUser('${u.uid}')">🗑 Delete</button>` : '<span style="color:var(--muted);font-size:.8rem;">Protected</span>'}
@@ -1293,32 +1170,27 @@ function renderAdminPanel() {
     </div>
   `).join('') : '<p style="color:var(--muted);padding:1rem;">No registered users.</p>';
 
-  // Charges tab
   document.getElementById('adminCharges').innerHTML = `
     <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1.5rem;">
       <h3 style="font-family:'Syne',sans-serif;margin-bottom:1.25rem;">💰 Fee & Charge Settings</h3>
       <div class="admin-fee-row">
         <div class="admin-fee-label">Listing Fee (%)</div>
         <input class="admin-fee-input" type="number" id="feePct" value="${charges.listingFeePercent}" min="0" max="50" step="0.5">
-        <span style="color:var(--muted);font-size:.85rem;">% of listing price added to displayed price</span>
       </div>
       <div class="admin-fee-row">
         <div class="admin-fee-label">Featured Boost (₹)</div>
         <input class="admin-fee-input" type="number" id="feeBoost" value="${charges.featuredBoost}" min="0">
-        <span style="color:var(--muted);font-size:.85rem;">One-time boost per ad</span>
       </div>
       <div class="admin-fee-row">
         <div class="admin-fee-label">Premium Plan (₹/mo)</div>
         <input class="admin-fee-input" type="number" id="feePremium" value="${charges.premiumPlan}" min="0">
-        <span style="color:var(--muted);font-size:.85rem;">Monthly seller subscription</span>
       </div>
       <button class="submit-btn" style="max-width:200px;margin-top:.75rem;" onclick="saveAdminCharges()">💾 Save Charges</button>
     </div>
   `;
 
-  // Seller contacts tab
   document.getElementById('adminContacts').innerHTML = `
-    <div style="margin-bottom:.75rem;color:var(--muted);font-size:.85rem;">All seller contact details from posted listings</div>
+    <div style="margin-bottom:.75rem;color:var(--muted);font-size:.85rem;">All seller contact details</div>
     ${listings.map(l => `
     <div class="admin-card">
       <div style="font-size:1.5rem;">${CAT_ICON[l.category]||'📦'}</div>
@@ -1330,7 +1202,7 @@ function renderAdminPanel() {
         <button class="small-btn small-btn-primary" onclick="showToast('📞 ${escHtml(l.phone||'N/A')}')">Call</button>
         <button class="small-btn small-btn-danger" onclick="adminUpdateContact(${l.id})">✏️ Edit</button>
       </div>
-    </div>`).join('') || '<p style="color:var(--muted);padding:1rem;">No listings found.</p>'}
+    </div>`).join('') || '<p style="color:var(--muted);padding:1rem;">No listings.</p>'}
   `;
 }
 
@@ -1340,17 +1212,17 @@ function switchAdminTab(tab, el) {
   document.querySelectorAll('.admin-section').forEach(s => s.classList.remove('active'));
   document.getElementById('admin' + tab.charAt(0).toUpperCase() + tab.slice(1)).classList.add('active');
 }
-
 async function adminDeleteListing(id) {
   if (!confirm('Delete this listing?')) return;
   listings = listings.filter(l => l.id !== id);
-  await deleteListingFromSupabase(id);
+  await sbDeleteListing(id);
   renderAdminPanel();
   showToast('🗑️ Listing deleted');
 }
 async function adminDeleteUser(uid) {
   if (!confirm('Delete this user and all their listings?')) return;
-  await deleteUserById(uid);
+  deleteUserById(uid);
+  await sbDeleteUser(uid);
   renderAdminPanel();
   showToast('🗑️ User deleted');
 }
@@ -1358,7 +1230,7 @@ function saveAdminCharges() {
   charges.listingFeePercent = parseFloat(document.getElementById('feePct').value) || 5;
   charges.featuredBoost = parseInt(document.getElementById('feeBoost').value) || 99;
   charges.premiumPlan = parseInt(document.getElementById('feePremium').value) || 299;
-  saveChargesToSupabase(charges);
+  saveCharges();
   showToast('✅ Charges update ho gaye!');
   renderAdminPanel();
   renderListings();
@@ -1374,38 +1246,29 @@ function adminUpdateContact(id) {
   showToast('✅ Contact updated');
 }
 
-// ======= MISSING SUPABASE FUNCTIONS (aliases) =======
-async function saveListingToSupabase(listing) { return await sbSaveListing(listing); }
-async function deleteListingFromSupabase(id) { return await sbDeleteListing(id); }
-async function saveChargesToSupabase(c) { return await sbSaveCharges(c); }
-
-// ======= INIT =======
-renderNav();
-renderListings();
-showStorageInfo();
-// Load from Supabase in background
-setTimeout(() => refreshListingsFromSupabase(), 500);
-// Load users from Supabase
-setTimeout(async () => {
-  const sbUsers = await sbLoadUsers();
-  if (sbUsers) { users = sbUsers; }
-  const sbCharges = await sbLoadCharges();
-  if (sbCharges) { charges = sbCharges; renderListings(); }
-}, 600);
-
+// ===== CLOUDINARY UPLOAD =====
 async function uploadToCloudinary(file) {
   const formData = new FormData();
   formData.append("file", file);
   formData.append("upload_preset", "my_upload");
-  const res = await fetch("https://api.cloudinary.com/v1_1/dada2emui/image/upload", {
-    method: "POST",
-    body: formData
-  });
+  const res = await fetch("https://api.cloudinary.com/v1_1/dada2emui/image/upload", { method: "POST", body: formData });
   const data = await res.json();
   return data.secure_url;
 }
+
+// ===== INIT =====
+renderNav();
+renderListings();
+// Load Supabase data in background
+setTimeout(() => refreshListingsFromSupabase(), 500);
+setTimeout(async () => {
+  const sbUsers = await sbLoadUsers();
+  if (sbUsers) users = sbUsers;
+  const sbCharges = await sbLoadCharges();
+  if (sbCharges) { charges = sbCharges; renderListings(); }
+}, 600);
+// FIX #1: Handle email confirmation redirect on page load
+setTimeout(() => handleEmailConfirmation(), 300);
 </script>
-
-
 </body>
 </html>
