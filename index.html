@@ -497,7 +497,11 @@ window.onAuthChanged = function(sbUser) {
   renderNav();
   renderListings();
 };
-
+// Sell FAB visibility control
+const fab = document.getElementById('sellFab');
+if (fab) {
+  fab.style.display = currentUser ? 'flex' : 'none';
+}
 // ======= SUPABASE OPS =======
 async function sbLoadListings() {
   try {
